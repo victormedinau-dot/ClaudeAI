@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PackSpec AI — Demo</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0e0f11;--surface:#16181c;--surface2:#1e2128;
+    --border:#2a2d35;--accent:#c8f04a;--accent2:#4af0c8;
+    --text:#e8eaf0;--muted:#6b7080;--radius:10px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Sora',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+
+  #demoBanner{
+    background:linear-gradient(90deg,#c8f04a18,#4af0c818);
+    border-bottom:1px solid #c8f04a44;
+    padding:9px 20px;display:flex;align-items:center;gap:10px;
+  }
+  .demo-pill{
+    background:var(--accent);color:#0e0f11;font-family:'DM Mono',monospace;
+    font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;letter-spacing:.1em;
+  }
+  #demoBanner p{font-size:12px;color:var(--accent);font-family:'DM Mono',monospace;}
+
+  .shell{display:grid;grid-template-columns:340px 1fr;height:calc(100vh - 42px);}
+  .sidebar{background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;}
+  .main{display:flex;flex-direction:column;overflow:hidden;}
+
+  .header{padding:18px 20px 14px;border-bottom:1px solid var(--border);}
+  .logo{font-family:'DM Mono',monospace;font-size:11px;color:var(--accent);letter-spacing:.15em;text-transform:uppercase;margin-bottom:4px;}
+  .header h1{font-size:15px;font-weight:600;}
+  .header p{font-size:12px;color:var(--muted);margin-top:3px;}
+
+  .steps{display:flex;padding:12px 20px;border-bottom:1px solid var(--border);}
+  .step{flex:1;text-align:center;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);padding:5px 2px;border-bottom:2px solid transparent;transition:all .2s;}
+  .step.active{color:var(--accent);border-color:var(--accent);}
+  .step.done{color:var(--accent2);border-color:var(--accent2);}
+
+  .form-body{padding:14px 18px;flex:1;overflow-y:auto;}
+  .field-group{margin-bottom:11px;}
+  label{display:block;font-size:11px;font-family:'DM Mono',monospace;color:var(--muted);margin-bottom:4px;letter-spacing:.05em;}
+  input[type=text],input[type=number],select,textarea{
+    width:100%;background:var(--surface2);border:1px solid var(--border);
+    border-radius:var(--radius);padding:8px 11px;color:var(--text);
+    font-family:'Sora',sans-serif;font-size:13px;outline:none;transition:border-color .2s;
+  }
+  input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+  select option{background:var(--surface2);}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;}
+
+  .tag-group{display:flex;flex-wrap:wrap;gap:5px;}
+  .tag-item{display:none;}
+  .tag-label{padding:4px 9px;border-radius:20px;border:1px solid var(--border);font-size:11px;cursor:pointer;transition:all .15s;color:var(--muted);font-family:'DM Mono',monospace;}
+  .tag-item:checked+.tag-label{border-color:var(--accent);color:var(--accent);background:#c8f04a18;}
+
+  .btn-primary{width:100%;padding:11px;background:var(--accent);color:#0e0f11;border:none;border-radius:var(--radius);font-family:'Sora',sans-serif;font-weight:600;font-size:14px;cursor:pointer;transition:opacity .2s;margin-top:4px;}
+  .btn-primary:hover{opacity:.88;}
+  .btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+
+  .chat-header{padding:14px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+  .chat-header h2{font-size:15px;font-weight:600;}
+  .status-dot{width:7px;height:7px;border-radius:50%;background:var(--muted);display:inline-block;margin-right:6px;transition:background .3s;}
+  .status-dot.active{background:var(--accent);box-shadow:0 0 5px var(--accent);}
+  .status-text{font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;}
+
+  .chat-body{flex:1;overflow-y:auto;padding:18px 22px;display:flex;flex-direction:column;gap:14px;}
+  .empty-state{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);text-align:center;gap:10px;}
+  .empty-icon{font-size:40px;opacity:.25;}
+  .empty-state p{font-size:13px;max-width:260px;line-height:1.6;}
+
+  .msg{display:flex;gap:9px;animation:fadeUp .25s ease;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
+  .msg-avatar{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:2px;font-family:'DM Mono',monospace;}
+  .msg.agent .msg-avatar{background:#c8f04a22;color:var(--accent);border:1px solid #c8f04a33;}
+  .msg.user .msg-avatar{background:#4af0c822;color:var(--accent2);border:1px solid #4af0c833;}
+  .msg-bubble{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;flex:1;font-size:13px;line-height:1.65;}
+  .msg.user .msg-bubble{background:#4af0c808;border-color:#4af0c822;}
+  .msg-bubble strong{color:var(--accent);font-weight:600;}
+  .spec-table{width:100%;margin-top:10px;border-collapse:collapse;}
+  .spec-table td{padding:5px 9px;border-bottom:1px solid var(--border);font-size:12px;}
+  .spec-table td:first-child{color:var(--muted);font-family:'DM Mono',monospace;width:52%;}
+  .spec-table td:last-child{color:var(--text);font-weight:500;}
+
+  .typing{display:flex;gap:4px;align-items:center;padding:3px 0;}
+  .typing span{width:5px;height:5px;border-radius:50%;background:var(--muted);animation:bounce .9s infinite;}
+  .typing span:nth-child(2){animation-delay:.15s;}
+  .typing span:nth-child(3){animation-delay:.3s;}
+  @keyframes bounce{0%,60%,100%{transform:translateY(0);}30%{transform:translateY(-5px);}}
+
+  .chat-input-area{padding:14px 22px;border-top:1px solid var(--border);display:flex;gap:9px;align-items:flex-end;flex-shrink:0;}
+  .chat-input-area textarea{flex:1;resize:none;min-height:38px;max-height:90px;padding:9px 13px;border-radius:9px;font-size:13px;line-height:1.5;}
+  .send-btn{padding:9px 15px;background:var(--accent);border:none;border-radius:9px;color:#0e0f11;font-weight:600;font-family:'Sora',sans-serif;font-size:13px;cursor:pointer;transition:opacity .2s;}
+  .send-btn:hover{opacity:.85;}
+  .send-btn:disabled{opacity:.35;cursor:not-allowed;}
+
+  .report-bar{background:#c8f04a12;border-top:1px solid #c8f04a33;padding:10px 22px;display:none;align-items:center;justify-content:space-between;flex-shrink:0;}
+  .report-bar.visible{display:flex;}
+  .report-bar p{font-size:12px;color:var(--accent);font-family:'DM Mono',monospace;}
+  .btn-dl{padding:8px 18px;background:var(--accent2);color:#0e0f11;border:none;border-radius:var(--radius);font-family:'Sora',sans-serif;font-weight:600;font-size:13px;cursor:pointer;}
+
+  ::-webkit-scrollbar{width:3px;}
+  ::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+</style>
+</head>
+<body>
+
+<div id="demoBanner">
+  <span class="demo-pill">DEMO</span>
+  <p>Modo de prueba activo — respuestas simuladas, sin API key requerida</p>
+</div>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="header">
+      <div class="logo">◈ PackSpec AI</div>
+      <h1>Agente de Corrugado</h1>
+      <p>Especificación técnica automatizada</p>
+    </div>
+    <div class="steps">
+      <div class="step active" id="step1">01 DATOS</div>
+      <div class="step" id="step2">02 ANÁLISIS</div>
+      <div class="step" id="step3">03 REPORTE</div>
+    </div>
+    <div class="form-body">
+      <div class="field-group">
+        <label>Nombre del producto</label>
+        <input type="text" id="nombre" placeholder="Ej: Detergente en polvo 1kg" value="Detergente en polvo 1kg">
+      </div>
+      <div class="field-group">
+        <label>Tipo de producto</label>
+        <select id="tipo">
+          <option value="">Seleccionar...</option>
+          <option selected>Seco / granulado</option>
+          <option>Líquido envasado</option>
+          <option>Frágil / vidrio</option>
+          <option>Alimento envasado</option>
+          <option>Electrónico</option>
+          <option>Químico / industrial</option>
+          <option>Otro</option>
+        </select>
+      </div>
+      <div class="field-group">
+        <label>Dimensiones del producto (cm) — L × A × H</label>
+        <div class="row3">
+          <input type="number" id="largo" placeholder="Largo" value="22">
+          <input type="number" id="ancho" placeholder="Ancho" value="14">
+          <input type="number" id="alto" placeholder="Alto" value="9">
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Peso unitario (kg)</label>
+        <input type="number" id="peso" step="0.01" placeholder="Ej: 1.2" value="1.1">
+      </div>
+      <div class="field-group">
+        <label>Unidades por caja</label>
+        <input type="number" id="unidades" placeholder="Ej: 12" value="12">
+      </div>
+      <div class="field-group">
+        <label>Dimensiones máximas de caja (cm) — L × A × H</label>
+        <div class="row3">
+          <input type="number" id="maxL" placeholder="Máx L" value="50">
+          <input type="number" id="maxA" placeholder="Máx A" value="35">
+          <input type="number" id="maxH" placeholder="Máx H" value="30">
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Dimensiones mínimas de caja (cm) — L × A × H</label>
+        <div class="row3">
+          <input type="number" id="minL" placeholder="Mín L">
+          <input type="number" id="minA" placeholder="Mín A">
+          <input type="number" id="minH" placeholder="Mín H">
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Tipo de flauta permitido</label>
+        <div class="tag-group">
+          <input type="checkbox" class="tag-item" id="fB" value="B"><label class="tag-label" for="fB">Flauta B</label>
+          <input type="checkbox" class="tag-item" id="fC" value="C" checked><label class="tag-label" for="fC">Flauta C</label>
+          <input type="checkbox" class="tag-item" id="fBC" value="BC"><label class="tag-label" for="fBC">Doble BC</label>
+          <input type="checkbox" class="tag-item" id="fSin" value="Sin preferencia"><label class="tag-label" for="fSin">Sin preferencia</label>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Condiciones de distribución</label>
+        <div class="tag-group">
+          <input type="checkbox" class="tag-item" id="cHum" value="Alta humedad"><label class="tag-label" for="cHum">Alta humedad</label>
+          <input type="checkbox" class="tag-item" id="cAp" value="Apilamiento alto" checked><label class="tag-label" for="cAp">Apilamiento alto</label>
+          <input type="checkbox" class="tag-item" id="cVib" value="Vibración/golpes"><label class="tag-label" for="cVib">Vibración/golpes</label>
+          <input type="checkbox" class="tag-item" id="cExp" value="Exportación"><label class="tag-label" for="cExp">Exportación</label>
+        </div>
+      </div>
+      <div class="field-group">
+        <label>Normas o estándares (opcional)</label>
+        <input type="text" id="normas" placeholder="Ej: ISTA 2A, NOM-050" value="NOM-050">
+      </div>
+      <div class="field-group">
+        <label>Notas adicionales (opcional)</label>
+        <textarea id="notas" rows="2" placeholder="Restricciones, preferencias del proveedor, etc."></textarea>
+      </div>
+      <button class="btn-primary" id="btnAnalizar" onclick="iniciarAnalisis()">
+        ◈ Generar especificación
+      </button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="chat-header">
+      <h2>Análisis del agente</h2>
+      <div>
+        <span class="status-dot" id="statusDot"></span>
+        <span class="status-text" id="statusText">Esperando datos</span>
+      </div>
+    </div>
+    <div class="chat-body" id="chatBody">
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">◈</div>
+        <p>El formulario ya tiene datos de ejemplo. Presiona <strong style="color:var(--accent)">"Generar especificación"</strong> para ver el agente en acción.</p>
+      </div>
+    </div>
+    <div class="chat-input-area">
+      <textarea id="chatInput" placeholder="Haz una pregunta al agente... (demo simulado)" rows="1"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();enviarPregunta()}"
+        oninput="this.style.height='38px';this.style.height=this.scrollHeight+'px'"></textarea>
+      <button class="send-btn" id="sendBtn" onclick="enviarPregunta()">Enviar</button>
+    </div>
+    <div class="report-bar" id="reportBar">
+      <p>✓ Especificación generada — lista para descargar</p>
+      <button class="btn-dl" onclick="descargarReporte()">↓ Descargar reporte</button>
+    </div>
+  </main>
+</div>
+
+<script>
+let reporteData = null;
+let ocupado = false;
+
+// ── Respuestas demo simuladas ──────────────────────────────
+const DEMO_SPEC = {
+  tipo_caja: "RSC (Regular Slotted Container)",
+  flauta: "C",
+  ECT: "44 lb/in",
+  gramaje_liner_ext: "186 g/m²",
+  gramaje_medium: "127 g/m²",
+  gramaje_liner_int: "152 g/m²",
+  BCT_estimado: "320 kg",
+  dimensiones_caja: { largo: 46, ancho: 30, alto: 20 },
+  tratamiento: "Ninguno",
+  impresion: "Flexografía 1 color",
+  norma_referencia: "NOM-050 / ISTA 1A",
+  justificacion: "Con 12 unidades de 1.1 kg cada una, el peso total de caja es 13.2 kg. La flauta C ofrece el balance óptimo entre resistencia a compresión y calibre. El ECT de 44 lb/in garantiza el BCT necesario para apilamiento de 6 tarimas (McKee: BCT = 5.87 × ECT × √(Pc × h)). Las dimensiones de caja permiten acomodo 3×2×2 con holgura de 2 mm por lado para facilitar el empaque."
+};
+
+const DEMO_FOLLOWUPS = {
+  default: "En modo demo, las respuestas son simuladas. En producción con tu API key real, el agente analiza cada pregunta en detalle usando su base de conocimiento en ingeniería de empaque.",
+  flauta: "La flauta C tiene un calibre de ~3.6 mm y es la más utilizada para cajas de consumo masivo con pesos entre 5 y 20 kg. Para este producto (13.2 kg total), flauta C es la elección correcta. Flauta B sería más delgada pero con menor BCT; doble BC sería excesivo y más costoso.",
+  bct: "El BCT (Box Compression Test) estimado de 320 kg se calcula con la fórmula de McKee: BCT = 5.87 × ECT × √(Perímetro × Calibre). Para distribución con apilamiento de 6 niveles y un factor de seguridad de 4×, necesitas mínimo 315 kg de BCT. Esta especificación lo cumple con margen.",
+  ect: "El ECT (Edge Crush Test) de 44 lb/in indica la resistencia del corrugado al aplastamiento lateral. Para este gramaje (186/127/152 g/m²) es el valor estándar de la industria. Si necesitas reducir costo, podrías bajar a 32 lb/in con flauta BC, pero sacrificas resistencia.",
+  humedad: "Para condiciones de alta humedad se recomienda tratamiento parafinado o laminado PE en el liner exterior. Esto puede incrementar el costo ~15-20% pero mantiene el BCT al 80% aún con 80% de humedad relativa. También considera caja resistente al agua (WAT - Water-Absorbing Test).",
+  norma: "NOM-050 establece los requisitos de información comercial para empaques en México. Para corrugado, la norma relevante de resistencia es NMX-D-016. ISTA 1A cubre pruebas de distribución para paquetes de menos de 68 kg, incluyendo caída, vibración y compresión."
+};
+
+function getDemoResponse(pregunta) {
+  const p = pregunta.toLowerCase();
+  if(p.includes('flauta')) return DEMO_FOLLOWUPS.flauta;
+  if(p.includes('bct') || p.includes('compresión') || p.includes('apilamiento')) return DEMO_FOLLOWUPS.bct;
+  if(p.includes('ect') || p.includes('gramaje') || p.includes('liner')) return DEMO_FOLLOWUPS.ect;
+  if(p.includes('humedad') || p.includes('agua') || p.includes('parafin')) return DEMO_FOLLOWUPS.humedad;
+  if(p.includes('norma') || p.includes('nom') || p.includes('ista')) return DEMO_FOLLOWUPS.norma;
+  return DEMO_FOLLOWUPS.default;
+}
+
+// ── UI helpers ─────────────────────────────────────────────
+function getFormData() {
+  const flautas = [...document.querySelectorAll('.tag-item[id^="f"]:checked')].map(e=>e.value);
+  const conds   = [...document.querySelectorAll('.tag-item[id^="c"]:checked')].map(e=>e.value);
+  return {
+    nombre: document.getElementById('nombre').value,
+    tipo:   document.getElementById('tipo').value,
+    largo:  document.getElementById('largo').value,
+    ancho:  document.getElementById('ancho').value,
+    alto:   document.getElementById('alto').value,
+    peso:   document.getElementById('peso').value,
+    unidades: document.getElementById('unidades').value,
+    maxL: document.getElementById('maxL').value,
+    maxA: document.getElementById('maxA').value,
+    maxH: document.getElementById('maxH').value,
+    flautas:    flautas.join(', ') || 'Sin restricción',
+    condiciones: conds.join(', ') || 'Estándar',
+    normas: document.getElementById('normas').value,
+    notas:  document.getElementById('notas').value
+  };
+}
+
+function setStatus(txt, activo) {
+  document.getElementById('statusText').textContent = txt;
+  document.getElementById('statusDot').classList.toggle('active', activo);
+}
+
+function setStep(n) {
+  [1,2,3].forEach(i=>{
+    const el = document.getElementById('step'+i);
+    el.classList.remove('active','done');
+    if(i < n) el.classList.add('done');
+    if(i === n) el.classList.add('active');
+  });
+}
+
+function addMsg(rol, html) {
+  const empty = document.getElementById('emptyState');
+  if(empty) empty.remove();
+  const body = document.getElementById('chatBody');
+  const div = document.createElement('div');
+  div.className = `msg ${rol}`;
+  div.innerHTML = `<div class="msg-avatar">${rol==='agent'?'AI':'TÚ'}</div><div class="msg-bubble">${html}</div>`;
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+}
+
+function addTyping() {
+  const empty = document.getElementById('emptyState');
+  if(empty) empty.remove();
+  const body = document.getElementById('chatBody');
+  const div = document.createElement('div');
+  div.id = 'typing-ind';
+  div.className = 'msg agent';
+  div.innerHTML = `<div class="msg-avatar">AI</div><div class="msg-bubble"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  body.appendChild(div);
+  body.scrollTop = body.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing-ind');
+  if(t) t.remove();
+}
+
+function buildSpecHTML(d, spec) {
+  return `Se trata de una caja para <strong>${d.nombre}</strong> con ${d.unidades} unidades por caja, dando un peso total de <strong>${(parseFloat(d.peso)*parseInt(d.unidades)).toFixed(1)} kg</strong>. Dado el peso y las condiciones de apilamiento, se recomienda flauta C con ECT de 44 lb/in, lo que proporciona un BCT ampliamente suficiente para la cadena de distribución.
+  <table class="spec-table">
+    <tr><td>Tipo de caja</td><td>${spec.tipo_caja}</td></tr>
+    <tr><td>Flauta</td><td>${spec.flauta}</td></tr>
+    <tr><td>ECT</td><td>${spec.ECT}</td></tr>
+    <tr><td>Liner ext / Medium / Liner int</td><td>${spec.gramaje_liner_ext} / ${spec.gramaje_medium} / ${spec.gramaje_liner_int}</td></tr>
+    <tr><td>BCT estimado</td><td>${spec.BCT_estimado}</td></tr>
+    <tr><td>Dimensiones caja (cm)</td><td>${spec.dimensiones_caja.largo} × ${spec.dimensiones_caja.ancho} × ${spec.dimensiones_caja.alto}</td></tr>
+    <tr><td>Tratamiento superficial</td><td>${spec.tratamiento}</td></tr>
+    <tr><td>Impresión</td><td>${spec.impresion}</td></tr>
+    <tr><td>Norma de referencia</td><td>${spec.norma_referencia}</td></tr>
+  </table>
+  <br><strong>Recomendación adicional:</strong> ${spec.justificacion}`;
+}
+
+// ── Lógica principal ───────────────────────────────────────
+async function iniciarAnalisis() {
+  const d = getFormData();
+  if(!d.nombre || !d.tipo || !d.largo || !d.peso) {
+    alert('Completa al menos: nombre, tipo, dimensiones y peso.');
+    return;
+  }
+  document.getElementById('btnAnalizar').disabled = true;
+  setStep(2); setStatus('Analizando...', true); ocupado = true;
+
+  const resumen = `<strong>Solicitud de especificación</strong><br><br>
+    Producto: ${d.nombre} · Tipo: ${d.tipo}<br>
+    Dimensiones: ${d.largo}×${d.ancho}×${d.alto} cm · Peso: ${d.peso} kg · ${d.unidades} uds/caja<br>
+    Flauta: ${d.flautas} · Condiciones: ${d.condiciones}`;
+  addMsg('user', resumen);
+  addTyping();
+
+  // Simular tiempo de respuesta
+  await new Promise(r => setTimeout(r, 1800));
+  removeTyping();
+  addMsg('agent', buildSpecHTML(d, DEMO_SPEC));
+
+  reporteData = { producto: d, spec: DEMO_SPEC };
+  document.getElementById('reportBar').classList.add('visible');
+  setStep(3); setStatus('Especificación lista', true);
+  document.getElementById('btnAnalizar').disabled = false;
+  ocupado = false;
+}
+
+async function enviarPregunta() {
+  const input = document.getElementById('chatInput');
+  const texto = input.value.trim();
+  if(!texto || ocupado) return;
+  input.value = ''; input.style.height = '38px';
+  document.getElementById('sendBtn').disabled = true;
+  setStatus('Respondiendo...', true); ocupado = true;
+
+  addMsg('user', texto);
+  addTyping();
+
+  await new Promise(r => setTimeout(r, 1200));
+  removeTyping();
+  addMsg('agent', getDemoResponse(texto));
+
+  document.getElementById('sendBtn').disabled = false;
+  setStatus('Listo', false); ocupado = false;
+}
+
+function descargarReporte() {
+  if(!reporteData) return;
+  const { producto: d, spec } = reporteData;
+  const fecha = new Date().toLocaleDateString('es-MX');
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Especificación Corrugado — DEMO</title>
+<style>body{font-family:Arial,sans-serif;max-width:800px;margin:40px auto;color:#1a1a1a;font-size:13px}
+h1{font-size:20px;margin-bottom:4px}.meta{color:#666;font-size:12px;margin-bottom:28px}
+.demo-badge{display:inline-block;background:#e8f700;color:#000;font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;margin-left:8px;letter-spacing:.1em}
+h2{font-size:14px;font-weight:bold;border-bottom:2px solid #000;padding-bottom:4px;margin:24px 0 12px;text-transform:uppercase}
+table{width:100%;border-collapse:collapse;margin-bottom:20px}td{padding:8px 12px;border:1px solid #ddd;font-size:13px}
+td:first-child{background:#f5f5f5;font-weight:bold;width:42%}
+.hl{background:#000!important;color:#fff;text-align:center;font-size:15px;padding:14px!important}
+.footer{margin-top:40px;font-size:11px;color:#999;border-top:1px solid #eee;padding-top:12px}</style></head><body>
+<h1>Especificación Técnica de Corrugado <span class="demo-badge">DEMO</span></h1>
+<div class="meta">Producto: <strong>${d.nombre}</strong> &nbsp;|&nbsp; Fecha: ${fecha} &nbsp;|&nbsp; PackSpec AI — Modo demostración</div>
+<h2>Datos del producto</h2><table>
+<tr><td>Nombre</td><td>${d.nombre}</td></tr>
+<tr><td>Tipo de producto</td><td>${d.tipo}</td></tr>
+<tr><td>Dimensiones unitarias (cm)</td><td>${d.largo} × ${d.ancho} × ${d.alto}</td></tr>
+<tr><td>Peso unitario</td><td>${d.peso} kg</td></tr>
+<tr><td>Unidades por caja</td><td>${d.unidades||'—'}</td></tr>
+<tr><td>Condiciones distribución</td><td>${d.condiciones}</td></tr>
+<tr><td>Normas aplicables</td><td>${d.normas||'—'}</td></tr></table>
+<h2>Especificación técnica recomendada</h2><table>
+<tr><td colspan="2" class="hl">CORRUGADO ${spec.flauta} — ${spec.ECT}</td></tr>
+<tr><td>Tipo de caja</td><td>${spec.tipo_caja}</td></tr>
+<tr><td>Flauta</td><td>${spec.flauta}</td></tr>
+<tr><td>ECT</td><td>${spec.ECT}</td></tr>
+<tr><td>Gramajes (ext / med / int)</td><td>${spec.gramaje_liner_ext} / ${spec.gramaje_medium} / ${spec.gramaje_liner_int}</td></tr>
+<tr><td>BCT estimado</td><td>${spec.BCT_estimado}</td></tr>
+<tr><td>Dimensiones caja (cm)</td><td>${spec.dimensiones_caja.largo} × ${spec.dimensiones_caja.ancho} × ${spec.dimensiones_caja.alto}</td></tr>
+<tr><td>Tratamiento</td><td>${spec.tratamiento}</td></tr>
+<tr><td>Impresión</td><td>${spec.impresion}</td></tr>
+<tr><td>Norma de referencia</td><td>${spec.norma_referencia}</td></tr></table>
+<h2>Justificación técnica</h2><p style="line-height:1.7">${spec.justificacion}</p>
+<div class="footer">Reporte generado en modo DEMO por PackSpec AI. Los datos son ilustrativos. Para especificaciones reales activa la API key.</div>
+</body></html>`;
+  const blob = new Blob([html],{type:'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `spec-demo-${d.nombre.replace(/\s+/g,'-').toLowerCase()}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+</script>
+</body>
+</html>
