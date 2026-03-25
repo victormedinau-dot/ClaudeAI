@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Genomma Lab Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Barlow+Condensed:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#08080f;--deep:#0e0e1c;--panel:#131320;--raised:#1a1a2c;--border:#262640;--border2:#363660;--text:#e8e8f4;--muted:#6464a0;--dim:#303050;--lime:#b8ff2e;--cyan:#2effd4;--pink:#ff2eb8;--amber:#ffb82e;--blue:#4488ff;--c-pack:#b8ff2e;--c-shelf:#2effd4;--c-radar:#ff2eb8;--wm:#0071ce;--sm:#0032a0;--co:#e8192c}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Barlow',sans-serif;font-size:14px;min-height:100vh;overflow-x:hidden}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.02) 3px,rgba(0,0,0,0.02) 4px);pointer-events:none;z-index:9999}
+.topbar{position:sticky;top:0;z-index:100;background:var(--deep);border-bottom:1px solid var(--border);height:54px;display:flex;align-items:center;padding:0 20px;gap:12px}
+.brand{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.12em;white-space:nowrap;color:var(--text)}
+.brand em{color:var(--lime);font-style:normal}
+.vr{width:1px;height:28px;background:var(--border);flex-shrink:0}
+.tool-tabs{display:flex;gap:3px}
+.ttab{display:flex;align-items:center;gap:8px;padding:7px 16px;border-radius:5px;border:1px solid transparent;cursor:pointer;transition:all .15s;user-select:none;white-space:nowrap}
+.ttab:hover{background:var(--raised);border-color:var(--border2)}
+.ttab.on{border-color:var(--border2);background:var(--panel)}
+.ttab.on[data-t="pack"]{border-color:rgba(184,255,46,.3);background:rgba(184,255,46,.05)}
+.ttab.on[data-t="shelf"]{border-color:rgba(46,255,212,.3);background:rgba(46,255,212,.05)}
+.ttab.on[data-t="radar"]{border-color:rgba(255,46,184,.3);background:rgba(255,46,184,.05)}
+.ttab-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ttab.on .ttab-dot{box-shadow:0 0 8px currentColor}
+.ttab-label{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.ttab-sub{font-size:10px;color:var(--muted);font-family:'Barlow Condensed',sans-serif}
+.ttab-badge{font-family:'DM Mono',monospace;font-size:9px;font-weight:500;padding:2px 7px;border-radius:2px;display:none}
+.ttab-badge.show{display:inline-block}
+.parrow{font-size:13px;color:var(--dim);transition:color .3s}
+.parrow.live{color:var(--lime)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.flow-pill{display:flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.08em;color:var(--muted);background:var(--panel);border:1px solid var(--border);padding:4px 10px;border-radius:20px}
+.flow-led{width:6px;height:6px;border-radius:50%;background:var(--dim);transition:all .3s}
+.flow-led.on{background:var(--lime);box-shadow:0 0 6px var(--lime)}
+.tool-panel{display:none}
+.tool-panel.on{display:block}
+.pg{max-width:1100px;margin:0 auto;padding:28px 24px 60px}
+.section-hd{font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:12px}
+.section-hd::after{content:'';flex:1;height:1px;background:var(--border)}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
+.field label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}
+input[type=text],select,textarea{background:var(--raised);border:1px solid var(--border);border-radius:5px;color:var(--text);font-family:'Barlow',sans-serif;font-size:13px;padding:8px 12px;outline:none;transition:border-color .15s;width:100%}
+input:focus,select:focus,textarea:focus{border-color:var(--lime)}
+select option{background:var(--raised)}
+.chip-row{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:14px}
+.chip{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:600;letter-spacing:.06em;padding:4px 11px;border-radius:3px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;user-select:none}
+.chip:hover{border-color:var(--text);color:var(--text)}
+.chip.on{background:var(--lime);color:var(--bg);border-color:var(--lime);font-weight:700}
+.chip.on.wm{background:var(--wm);border-color:var(--wm);color:#fff}
+.chip.on.sm{background:var(--sm);border-color:var(--sm);color:#fff}
+.chip.on.co{background:var(--co);border-color:var(--co);color:#fff}
+.chip.on.amber{background:var(--amber);border-color:var(--amber);color:var(--bg)}
+.chip.on.blue{background:var(--blue);border-color:var(--blue);color:#fff}
+.chip.on.green{background:#2b7a4b;border-color:#2b7a4b;color:#fff}
+.run-btn{width:100%;background:var(--lime);color:var(--bg);border:none;border-radius:7px;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.1em;padding:13px;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.run-btn:hover{background:#d4ff6e;transform:translateY(-1px);box-shadow:0 8px 24px rgba(184,255,46,.2)}
+.run-btn:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none}
+.run-btn.cyan{background:var(--cyan)}
+.run-btn.cyan:hover{background:#6efff0}
+.run-btn.pink{background:var(--pink);color:#fff}
+.run-btn.pink:hover{background:#ff6ed0}
+.ring-wrap{position:relative;width:110px;height:110px;flex-shrink:0}
+.ring-wrap svg{transform:rotate(-90deg)}
+.ring-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:34px;line-height:1}
+.ring-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted)}
+.vbadge{display:inline-block;padding:4px 12px;border-radius:20px;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.bar-label{font-family:'Barlow Condensed',sans-serif;font-size:11px;color:var(--muted);width:130px;flex-shrink:0}
+.bar-track{flex:1;height:5px;background:var(--raised);border-radius:2px;overflow:hidden}
+.bar-fill{height:100%;border-radius:2px;transition:width 1s ease}
+.bar-val{font-family:'DM Mono',monospace;font-size:11px;width:28px;text-align:right}
+.rec{background:var(--raised);border-radius:5px;padding:10px 14px;font-size:12px;line-height:1.6;color:var(--muted);border-left:3px solid var(--dim);margin-bottom:8px}
+.rec strong{display:block;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text);margin-bottom:3px}
+.rec.crit{border-left-color:var(--pink)}
+.rec.warn{border-left-color:var(--amber)}
+.rec.ok{border-left-color:var(--cyan)}
+.overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(8,8,15,.92);backdrop-filter:blur(6px);flex-direction:column;align-items:center;justify-content:center;gap:20px}
+.overlay.on{display:flex}
+.ov-logo{font-family:'Bebas Neue',sans-serif;font-size:48px;letter-spacing:.1em;color:var(--lime);animation:blink 1s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.ov-bar{width:280px;height:2px;background:var(--border)}
+.ov-fill{height:100%;background:var(--lime);animation:fillbar 3.5s ease forwards}
+@keyframes fillbar{from{width:0}to{width:100%}}
+.ov-msg{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.12em;color:var(--muted)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(16px);background:var(--raised);border:1px solid var(--lime);border-radius:6px;padding:10px 20px;font-family:'DM Mono',monospace;font-size:12px;color:var(--lime);z-index:600;opacity:0;pointer-events:none;transition:all .25s;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty{padding:60px 20px;text-align:center}
+.empty-icon{font-size:48px;opacity:.15;margin-bottom:12px}
+.empty-title{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--dim);margin-bottom:6px}
+.empty-sub{font-size:12px;color:var(--dim);line-height:1.6}
+#panel-pack .pg{display:grid;grid-template-columns:360px 1fr;gap:24px;align-items:start}
+.upload-zone{border:2px dashed var(--border2);border-radius:8px;padding:28px 16px;text-align:center;cursor:pointer;transition:all .2s;margin-bottom:14px;position:relative;overflow:hidden}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--lime);background:rgba(184,255,46,.04)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-zone-icon{font-size:28px;margin-bottom:8px}
+.upload-zone-txt{font-size:13px;color:var(--muted);line-height:1.5}
+.upload-zone-txt strong{color:var(--text)}
+#pack-preview{width:100%;max-height:200px;object-fit:contain;border-radius:6px;display:none;background:var(--raised);border:1px solid var(--border);margin-bottom:14px}
+.color-swatches{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+.swatch{width:30px;height:30px;border-radius:5px;cursor:pointer;border:2px solid transparent;transition:all .15s}
+.swatch.on{border-color:#fff;transform:scale(1.15)}
+.score-header{display:flex;align-items:center;gap:20px;padding:20px}
+.criteria-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px 16px}
+.criterion{background:var(--raised);border-radius:6px;padding:14px}
+.crit-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.crit-name{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.crit-score{font-family:'Bebas Neue',sans-serif;font-size:24px}
+.crit-bar{height:4px;background:var(--border);border-radius:2px;margin-bottom:8px;overflow:hidden}
+.crit-fill{height:100%;border-radius:2px;transition:width 1s}
+.crit-note{font-size:11px;color:var(--muted);line-height:1.5}
+.retailer-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:12px}
+.retailer-row:last-child{border-bottom:none}
+.retailer-name{font-weight:700;width:80px;flex-shrink:0}
+.ret-bar{flex:1;height:5px;background:var(--raised);border-radius:2px;overflow:hidden}
+.ret-fill{height:100%;border-radius:2px;transition:width 1s}
+.ret-pct{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);width:32px;text-align:right}
+#panel-shelf .pg{display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start}
+.pkg-slot{background:var(--panel);border:1.5px dashed var(--border2);border-radius:6px;padding:10px;cursor:pointer;transition:all .2s;position:relative;min-height:70px;display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.pkg-slot:hover{border-color:var(--c-shelf)}
+.pkg-slot.filled{border-style:solid}
+.pkg-slot input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.pkg-thumb{width:44px;height:44px;border-radius:4px;background:var(--raised);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;font-size:20px}
+.pkg-thumb img{width:100%;height:100%;object-fit:cover}
+.pkg-slot-name{font-family:'Barlow Condensed',sans-serif;font-size:13px;font-weight:600}
+.pkg-slot-sub{font-size:10px;color:var(--muted)}
+.pkg-rm{position:absolute;top:5px;right:5px;width:16px;height:16px;border-radius:50%;background:var(--raised);border:none;color:var(--muted);cursor:pointer;font-size:9px;display:flex;align-items:center;justify-content:center;transition:all .15s;z-index:2}
+.pkg-rm:hover{background:var(--pink);color:#fff}
+.shelf-scene{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:20px;margin-bottom:20px}
+.shelf-unit{background:#111118;border:2px solid #1e1e30;border-radius:4px;padding:0 10px 10px}
+.shelf-store-hd{text-align:center;padding:8px;font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.15em;border-bottom:2px solid #1e1e30;margin:0 -10px 12px}
+.shelf-row{display:flex;align-items:flex-end;background:linear-gradient(to bottom,#1e1e28,#161620);border:1px solid #2a2a3a;border-radius:3px;padding:6px 6px 0;margin-bottom:5px;min-height:110px;gap:3px;overflow:hidden;position:relative}
+.shelf-row::after{content:'';position:absolute;bottom:0;left:0;right:0;height:7px;background:linear-gradient(to bottom,#5a3e28,#3d2a1a);border-top:1px solid #7a5a38}
+.sp{display:flex;flex-direction:column;align-items:center;flex-shrink:0;cursor:pointer;transition:transform .15s;position:relative}
+.sp:hover{transform:translateY(-3px);z-index:2}
+.sp-ph{border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:8px;font-family:'Barlow Condensed',sans-serif;font-weight:600;color:rgba(255,255,255,.4);text-align:center;padding:2px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.4))}
+.sp-lbl{font-size:7px;color:rgba(255,255,255,.3);margin-top:2px;max-width:48px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;margin-bottom:9px}
+.sp.focal::before{content:'';position:absolute;inset:-3px;border:2px solid var(--c-shelf);border-radius:5px;animation:glowPulse 2s ease-in-out infinite;pointer-events:none}
+@keyframes glowPulse{0%,100%{opacity:.5;box-shadow:0 0 8px rgba(46,255,212,.3)}50%{opacity:1;box-shadow:0 0 20px rgba(46,255,212,.6)}}
+.ptag{position:absolute;bottom:9px;left:50%;transform:translateX(-50%);background:#ff0;color:#000;font-size:6px;font-weight:900;padding:1px 4px;border-radius:1px;white-space:nowrap;font-family:'Barlow Condensed',sans-serif}
+.eye-line{position:absolute;left:0;right:0;height:1px;background:rgba(46,255,212,.25);pointer-events:none}
+.eye-line::before{content:'EYE LEVEL';position:absolute;right:6px;top:-7px;font-size:7px;font-family:'DM Mono',monospace;color:var(--cyan);opacity:.5}
+.shelf-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:5px;overflow:hidden;margin-top:16px}
+.sm{background:var(--panel);padding:10px 14px;text-align:center}
+.sm-val{font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1;margin-bottom:2px}
+.sm-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.ch-btns{display:flex;gap:5px;margin-bottom:14px}
+.ch-btn{font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.06em;padding:4px 12px;border-radius:3px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer;transition:all .15s}
+.ch-btn.on.wm{background:var(--wm);border-color:var(--wm);color:#fff}
+.ch-btn.on.sm{background:var(--sm);border-color:var(--sm);color:#fff}
+.ch-btn.on.co{background:var(--co);border-color:var(--co);color:#fff}
+.cmp-grid{display:grid;gap:14px}
+.cmp-grid.n1{grid-template-columns:1fr;max-width:440px}
+.cmp-grid.n2{grid-template-columns:repeat(2,1fr)}
+.cmp-grid.n3{grid-template-columns:repeat(3,1fr)}
+.cmp-card{background:var(--panel);border:1px solid var(--border);border-radius:7px;overflow:hidden;animation:fadeUp .35s forwards;opacity:0}
+@keyframes fadeUp{to{opacity:1;transform:none}}
+.cmp-card-hd{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border)}
+.cmp-thumb{width:36px;height:36px;border-radius:4px;overflow:hidden;background:var(--raised);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.cmp-thumb img{width:100%;height:100%;object-fit:cover}
+.cmp-name{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;flex:1}
+.cmp-ovr{font-family:'Bebas Neue',sans-serif;font-size:30px;line-height:1}
+.cmp-body{padding:12px 14px}
+.cmp-verdict{font-size:11px;color:var(--muted);font-style:italic;line-height:1.55;background:var(--raised);border-radius:4px;padding:8px 10px;margin-top:8px}
+#panel-radar .pg{display:grid;grid-template-columns:300px 1fr;gap:24px;align-items:start}
+.stat-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:6px;overflow:hidden;margin-bottom:20px}
+.stat-cell{background:var(--panel);padding:12px 16px;text-align:center}
+.stat-num{font-family:'Bebas Neue',sans-serif;font-size:30px;line-height:1;margin-bottom:2px}
+.stat-lbl{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.product-card{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:start;border-bottom:1px solid var(--border);padding:14px 0;animation:fadeUp .3s forwards;opacity:0;cursor:pointer}
+.pc-rank{font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--dim);min-width:32px;text-align:center;line-height:1;padding-top:2px}
+.pc-meta{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px}
+.pc-name{font-family:'Barlow Condensed',sans-serif;font-size:15px;font-weight:700;margin-bottom:3px}
+.pc-brand{font-size:11px;color:var(--muted);font-style:italic;margin-bottom:5px}
+.pc-claims{font-size:12px;color:var(--muted);line-height:1.5}
+.pc-price{font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--cyan);text-align:right}
+.pc-price-lbl{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);display:block}
+.tag{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.08em;padding:2px 7px;border-radius:2px;text-transform:uppercase}
+.tag-new{background:var(--pink);color:#fff}
+.tag-wm{background:var(--wm);color:#fff}
+.tag-sm{background:var(--sm);color:#fff}
+.tag-co{background:var(--co);color:#fff}
+.tag-amz{background:#ff9900;color:#111}
+.tag-ml{background:#ffe600;color:#111}
+.tag-pharma{background:#00843d;color:#fff}
+.tag-cat{background:var(--raised);color:var(--muted);border:1px solid var(--border2)}
+.tag-otc{background:rgba(184,255,46,.12);color:var(--lime)}
+.tag-cp{background:rgba(255,184,46,.12);color:var(--amber)}
+.tag-bev{background:rgba(68,136,255,.12);color:var(--blue)}
+.tag-inf{background:rgba(43,122,75,.15);color:#2effa0}
+.scan-anim{text-align:center;padding:48px 0;display:none}
+.scan-anim.on{display:block}
+.scan-msg{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:.15em;color:var(--muted);margin-bottom:16px}
+.scan-bar{max-width:360px;margin:0 auto 14px;height:2px;background:var(--border);position:relative;overflow:hidden}
+.scan-bar::after{content:'';position:absolute;inset:0;background:var(--pink);animation:scanSlide 2s ease-in-out infinite}
+@keyframes scanSlide{0%{transform:scaleX(0);transform-origin:left}50%{transform:scaleX(1);transform-origin:left}51%{transform:scaleX(1);transform-origin:right}100%{transform:scaleX(0);transform-origin:right}}
+.scan-sources{display:flex;justify-content:center;flex-wrap:wrap;gap:6px}
+.scan-src{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.08em;padding:3px 10px;border:1px solid var(--border2);color:var(--muted);border-radius:2px;transition:all .3s}
+.scan-src.lit{border-color:var(--pink);color:var(--pink)}
+.sdb{background:var(--panel);border:1px solid var(--border);border-radius:7px;padding:16px;margin-bottom:16px}
+.sdb-title{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);padding-bottom:8px;margin-bottom:12px}
+.ret-line{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:12px}
+.ret-n{font-weight:700;width:70px;flex-shrink:0;font-size:11px}
+.ret-bw{flex:1;height:4px;background:var(--raised);border-radius:2px;overflow:hidden}
+.ret-bf{height:100%;border-radius:2px;transition:width 1s}
+.ret-ct{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);width:16px;text-align:right}
+.cat-row{display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px dotted var(--border)}
+.cat-row:last-child{border-bottom:none}
+.cat-n{color:var(--muted)}
+.cat-ct{font-family:'DM Mono',monospace;font-weight:700}
+.log-item{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);padding:3px 0;border-bottom:1px dotted var(--border);line-height:1.4}
+.log-item:last-child{border-bottom:none}
+.log-t{color:var(--pink)}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(8,8,15,.7);z-index:400;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-bg.on{display:flex}
+.modal{background:var(--deep);border:1.5px solid var(--border2);border-radius:8px;max-width:520px;width:90%;max-height:80vh;overflow-y:auto;padding:24px;position:relative}
+.modal-x{position:absolute;top:12px;right:14px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;transition:color .15s}
+.modal-x:hover{color:var(--pink)}
+.modal h2{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.05em;margin-bottom:4px;padding-right:28px}
+.modal-brand{color:var(--muted);font-style:italic;font-size:12px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.modal-sec-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin:12px 0 4px}
+.modal-sec-val{font-size:13px;line-height:1.6;color:var(--muted)}
+.hb{display:none;background:rgba(184,255,46,.06);border-bottom:1px solid rgba(184,255,46,.2);padding:8px 20px;align-items:center;gap:10px;font-family:'Barlow Condensed',sans-serif;font-size:12px;letter-spacing:.06em}
+.hb.on{display:flex}
+.hb-tag{background:rgba(184,255,46,.15);color:var(--lime);border:1px solid rgba(184,255,46,.3);padding:2px 8px;border-radius:2px;font-size:9px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;flex-shrink:0}
+.hb-items{display:flex;gap:16px;flex-wrap:wrap;flex:1;font-size:12px}
+.hb-item{color:var(--text)}
+.hb-item span{color:var(--muted);margin-right:4px}
+.hb-close{background:none;border:none;color:var(--dim);cursor:pointer;font-size:13px;padding:2px 6px}
+@media(max-width:820px){#panel-pack .pg,#panel-shelf .pg,#panel-radar .pg{grid-template-columns:1fr}.criteria-grid{grid-template-columns:1fr}.cmp-grid.n2,.cmp-grid.n3{grid-template-columns:1fr}.stat-strip{grid-template-columns:repeat(2,1fr)}.tool-tabs{overflow-x:auto}.ttab-sub{display:none}}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">GENOMMA<em>LAB</em></div>
+  <div class="vr"></div>
+  <div class="tool-tabs">
+    <div class="ttab on" data-t="pack" onclick="gotoTool('pack',this)">
+      <div class="ttab-dot" style="background:var(--c-pack);color:var(--c-pack)"></div>
+      <div><div class="ttab-label" style="color:var(--c-pack)">PackScore</div><div class="ttab-sub">Evaluador de empaque</div></div>
+      <div class="ttab-badge" id="badge-pack" style="background:rgba(184,255,46,.12);color:var(--c-pack)"></div>
+    </div>
+    <div class="parrow" id="arr1">→</div>
+    <div class="ttab" data-t="shelf" onclick="gotoTool('shelf',this)">
+      <div class="ttab-dot" style="background:var(--c-shelf);color:var(--c-shelf)"></div>
+      <div><div class="ttab-label" style="color:var(--c-shelf)">ShelfSim</div><div class="ttab-sub">Simulador de canales</div></div>
+      <div class="ttab-badge" id="badge-shelf" style="background:rgba(46,255,212,.12);color:var(--c-shelf)"></div>
+    </div>
+    <div class="parrow" id="arr2">→</div>
+    <div class="ttab" data-t="radar" onclick="gotoTool('radar',this)">
+      <div class="ttab-dot" style="background:var(--c-radar);color:var(--c-radar)"></div>
+      <div><div class="ttab-label" style="color:var(--c-radar)">OTC Radar</div><div class="ttab-sub">Monitor de lanzamientos</div></div>
+      <div class="ttab-badge" id="badge-radar" style="background:rgba(255,46,184,.12);color:var(--c-radar)"></div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <div class="flow-pill"><div class="flow-led" id="flow-led"></div><span id="flow-lbl">Sin análisis</span></div>
+  </div>
+</div>
+
+<!-- PACKSCORE -->
+<div class="tool-panel on" id="panel-pack">
+  <div class="pg">
+    <div>
+      <div class="section-hd" style="color:var(--c-pack)">Parámetros del Empaque</div>
+      <div class="upload-zone" id="pack-zone">
+        <input type="file" accept="image/*" id="pack-file" onchange="onPackFile(event)">
+        <div class="upload-zone-icon">📦</div>
+        <div class="upload-zone-txt"><strong>Arrastra tu render aquí</strong><br>o haz clic · PNG, JPG, WEBP</div>
+      </div>
+      <img id="pack-preview" alt="">
+      <div class="field"><label>Categoría</label>
+        <select id="pack-cat">
+          <option value="">Selecciona...</option>
+          <option>Analgésicos OTC</option><option>Antigripales</option><option>Vitaminas y Suplementos</option>
+          <option>Dermatología OTC</option><option>Digestivos</option><option>Higiene Íntima</option>
+          <option>Cuidado Capilar</option><option>Cuidado de Piel</option><option>Higiene Bucal</option>
+          <option>Bebidas Funcionales</option><option>Fórmulas Infantiles</option>
+        </select>
+      </div>
+      <div class="field"><label>Precio / Oferta</label><input type="text" id="pack-price" placeholder="Ej: $189 MXN / 2x1"></div>
+      <div class="field"><label>Formato</label>
+        <div class="chip-row" id="pack-format">
+          <div class="chip" onclick="chipOne(this,'pack-format')">Multipack</div>
+          <div class="chip" onclick="chipOne(this,'pack-format')">Bundle</div>
+          <div class="chip" onclick="chipOne(this,'pack-format')">Blister</div>
+          <div class="chip" onclick="chipOne(this,'pack-format')">Caja</div>
+          <div class="chip" onclick="chipOne(this,'pack-format')">Bolsa</div>
+          <div class="chip" onclick="chipOne(this,'pack-format')">Display</div>
+        </div>
+      </div>
+      <div class="field"><label>Claims</label>
+        <div class="chip-row" id="pack-claims">
+          <div class="chip" onclick="chipToggle(this)">2x1</div><div class="chip" onclick="chipToggle(this)">Gratis</div>
+          <div class="chip" onclick="chipToggle(this)">Pack Ahorro</div><div class="chip" onclick="chipToggle(this)">Nueva Fórmula</div>
+          <div class="chip" onclick="chipToggle(this)">Precio Especial</div><div class="chip" onclick="chipToggle(this)">Más Contenido</div>
+          <div class="chip" onclick="chipToggle(this)">Nuevo</div><div class="chip" onclick="chipToggle(this)">Exclusivo</div>
+        </div>
+        <input type="text" id="pack-extra-claim" placeholder="Claim adicional libre...">
+      </div>
+      <div class="field"><label>Colores dominantes</label>
+        <div class="color-swatches">
+          <div class="swatch" style="background:#e8132b" title="Rojo" onclick="swatchToggle(this)"></div>
+          <div class="swatch" style="background:#005cad" title="Azul" onclick="swatchToggle(this)"></div>
+          <div class="swatch" style="background:#00a651" title="Verde" onclick="swatchToggle(this)"></div>
+          <div class="swatch" style="background:#ffd700" title="Amarillo" onclick="swatchToggle(this)"></div>
+          <div class="swatch" style="background:#ff6b00" title="Naranja" onclick="swatchToggle(this)"></div>
+          <div class="swatch" style="background:#6a0dad" title="Morado" onclick="swatchToggle(this)"></div>
+          <div class="swatch" style="background:#fff;border:1px solid #444" title="Blanco" onclick="swatchToggle(this)"></div>
+          <div class="swatch" style="background:#1a1a1a;border:1px solid #555" title="Negro" onclick="swatchToggle(this)"></div>
+          <div class="swatch" style="background:#f5a0b5" title="Rosa" onclick="swatchToggle(this)"></div>
+          <div class="swatch" style="background:#40e0d0" title="Turquesa" onclick="swatchToggle(this)"></div>
+        </div>
+      </div>
+      <div class="field"><label>Cadenas destino</label>
+        <div class="chip-row" id="pack-retailers">
+          <div class="chip on wm" onclick="chipToggle(this)">Walmart</div>
+          <div class="chip on sm" onclick="chipToggle(this)">Sam's Club</div>
+          <div class="chip on co" onclick="chipToggle(this)">Costco</div>
+        </div>
+      </div>
+      <button class="run-btn" id="pack-btn" onclick="runPackScore()">▶ ANALIZAR EMPAQUE</button>
+    </div>
+    <div id="pack-results">
+      <div class="empty"><div class="empty-icon">📊</div><div class="empty-title">Sin análisis</div><div class="empty-sub">Completa los parámetros y presiona Analizar</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- SHELFSIM -->
+<div class="tool-panel" id="panel-shelf">
+  <div class="hb" id="hb-shelf">
+    <div class="hb-tag">↓ Desde PackScore</div>
+    <div class="hb-items" id="hb-shelf-items"></div>
+    <button class="hb-close" onclick="document.getElementById('hb-shelf').classList.remove('on')">✕</button>
+  </div>
+  <div class="pg">
+    <div>
+      <div class="section-hd" style="color:var(--c-shelf)">Empaques (máx. 3)</div>
+      <div id="shelf-slots"></div>
+      <div class="field"><label>Categoría</label>
+        <select id="shelf-cat">
+          <option value="">Selecciona...</option>
+          <option>Analgésicos OTC</option><option>Antigripales</option><option>Vitaminas y Suplementos</option>
+          <option>Dermatología OTC</option><option>Digestivos</option><option>Higiene Íntima</option>
+          <option>Cuidado Capilar</option><option>Cuidado de Piel</option><option>Higiene Bucal</option>
+          <option>Bebidas Funcionales</option><option>Fórmulas Infantiles</option>
+        </select>
+      </div>
+      <div class="field"><label>Precio / Oferta</label><input type="text" id="shelf-price" placeholder="Ej: $189 MXN / 2x1"></div>
+      <div class="field"><label>Claims clave</label><textarea id="shelf-claims" rows="2" placeholder="Ej: Nueva fórmula, Sin parabenos..."></textarea></div>
+      <div class="field"><label>Canales</label>
+        <div class="chip-row" id="shelf-channels">
+          <div class="chip on wm" onclick="chipToggle(this)">Walmart</div>
+          <div class="chip on sm" onclick="chipToggle(this)">Sam's Club</div>
+          <div class="chip on co" onclick="chipToggle(this)">Costco</div>
+          <div class="chip on" onclick="chipToggle(this)">Amazon MX</div>
+          <div class="chip on" onclick="chipToggle(this)">Farmacias</div>
+        </div>
+      </div>
+      <div class="field"><label>Posición en anaquel</label>
+        <div class="chip-row" id="shelf-pos">
+          <div class="chip on" onclick="chipOne(this,'shelf-pos')">Eye Level</div>
+          <div class="chip" onclick="chipOne(this,'shelf-pos')">Top Shelf</div>
+          <div class="chip" onclick="chipOne(this,'shelf-pos')">Bottom</div>
+          <div class="chip" onclick="chipOne(this,'shelf-pos')">End Cap</div>
+        </div>
+      </div>
+      <button class="run-btn cyan" id="shelf-btn" onclick="runShelfSim()">▶ SIMULAR</button>
+    </div>
+    <div id="shelf-results">
+      <div class="empty"><div class="empty-icon">🏪</div><div class="empty-title">Sin simulación</div><div class="empty-sub">Sube renders y presiona Simular</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- OTC RADAR -->
+<div class="tool-panel" id="panel-radar">
+  <div class="hb" id="hb-radar">
+    <div class="hb-tag">↓ Contexto activo</div>
+    <div class="hb-items" id="hb-radar-items"></div>
+    <button class="hb-close" onclick="document.getElementById('hb-radar').classList.remove('on')">✕</button>
+  </div>
+  <div class="pg">
+    <div>
+      <div class="section-hd" style="color:var(--c-radar)">Cadenas</div>
+      <div class="chip-row" id="radar-retailers">
+        <div class="chip on wm" onclick="chipToggle(this)">Walmart</div>
+        <div class="chip on sm" onclick="chipToggle(this)">Sam's</div>
+        <div class="chip on co" onclick="chipToggle(this)">Costco</div>
+        <div class="chip on" onclick="chipToggle(this)">Amazon MX</div>
+        <div class="chip on" onclick="chipToggle(this)">Mercado Libre</div>
+        <div class="chip on" onclick="chipToggle(this)">Farmacias Ahorro</div>
+        <div class="chip on" onclick="chipToggle(this)">Benavides</div>
+        <div class="chip on" onclick="chipToggle(this)">Guadalajara</div>
+      </div>
+      <div class="section-hd" style="color:var(--c-radar);margin-top:8px">Categorías</div>
+      <div id="radar-cats">
+      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;color:var(--muted);margin-bottom:5px">── OTC ──</div>
+      <div class="chip-row">
+        <div class="chip on" onclick="chipToggle(this)">Analgésicos</div>
+        <div class="chip on" onclick="chipToggle(this)">Antigripales</div>
+        <div class="chip on" onclick="chipToggle(this)">Dermatología OTC</div>
+        <div class="chip on" onclick="chipToggle(this)">Vitaminas</div>
+        <div class="chip on" onclick="chipToggle(this)">Digestivos</div>
+        <div class="chip on" onclick="chipToggle(this)">Higiene Íntima</div>
+      </div>
+      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;color:var(--amber);margin:8px 0 5px">── CUIDADO PERSONAL ──</div>
+      <div class="chip-row">
+        <div class="chip on amber" onclick="chipToggle(this)">Cuidado Capilar</div>
+        <div class="chip on amber" onclick="chipToggle(this)">Cuidado de Piel</div>
+        <div class="chip on amber" onclick="chipToggle(this)">Desodorantes</div>
+        <div class="chip on amber" onclick="chipToggle(this)">Higiene Bucal</div>
+        <div class="chip on amber" onclick="chipToggle(this)">Protección Solar</div>
+      </div>
+      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;color:var(--blue);margin:8px 0 5px">── BEBIDAS ──</div>
+      <div class="chip-row">
+        <div class="chip on blue" onclick="chipToggle(this)">Bebidas Funcionales</div>
+        <div class="chip on blue" onclick="chipToggle(this)">Energéticas</div>
+        <div class="chip on blue" onclick="chipToggle(this)">Deportivas</div>
+        <div class="chip on blue" onclick="chipToggle(this)">Electrolitos</div>
+      </div>
+      <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;color:#2effa0;margin:8px 0 5px">── FÓRMULAS INFANTILES ──</div>
+      <div class="chip-row" style="margin-bottom:16px">
+        <div class="chip on green" onclick="chipToggle(this)">Fórmula Etapa 1</div>
+        <div class="chip on green" onclick="chipToggle(this)">Fórmula Etapa 2-3</div>
+        <div class="chip on green" onclick="chipToggle(this)">Fórmulas Especiales</div>
+        <div class="chip on green" onclick="chipToggle(this)">Papillas Bebé</div>
+      </div>
+      </div><!-- /radar-cats -->
+      <div class="field"><label>Buscar</label><input type="text" id="radar-search" placeholder="Marca, principio activo..." oninput="filterRadar()"></div>
+      <button class="run-btn pink" id="radar-btn" onclick="runRadar()">⬛ ESCANEAR AHORA</button>
+      <button onclick="exportRadarCSV()" style="margin-top:8px;width:100%;background:transparent;border:1px solid var(--border2);color:var(--muted);border-radius:5px;padding:8px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">↓ Exportar CSV</button>
+    </div>
+    <div>
+      <div class="stat-strip">
+        <div class="stat-cell"><div class="stat-num" id="r-stat-total" style="color:var(--pink)">0</div><div class="stat-lbl">Productos</div></div>
+        <div class="stat-cell"><div class="stat-num" id="r-stat-brands">0</div><div class="stat-lbl">Marcas</div></div>
+        <div class="stat-cell"><div class="stat-num" id="r-stat-ret">0</div><div class="stat-lbl">Cadenas</div></div>
+        <div class="stat-cell"><div class="stat-num" id="r-stat-cats">0</div><div class="stat-lbl">Categorías</div></div>
+      </div>
+      <div class="scan-anim" id="radar-scan-anim">
+        <div class="scan-msg" id="radar-scan-msg">ESCANEANDO CADENAS...</div>
+        <div class="scan-bar"></div>
+        <div class="scan-sources" id="radar-sources"></div>
+      </div>
+      <div id="radar-feed">
+        <div class="empty"><div class="empty-icon">📡</div><div class="empty-title">Sin datos</div><div class="empty-sub">Presiona Escanear para detectar lanzamientos</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px">
+        <div class="sdb"><div class="sdb-title">Por Cadena</div><div id="r-ret-list"><div style="font-size:11px;color:var(--dim)">Sin datos</div></div></div>
+        <div class="sdb"><div class="sdb-title">Por Categoría</div><div id="r-cat-list"><div style="font-size:11px;color:var(--dim)">Sin datos</div></div></div>
+      </div>
+      <div class="sdb" style="margin-top:16px"><div class="sdb-title">Actividad</div><div id="r-log"><div class="log-item">Sistema listo.</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="ov-logo">ANALIZANDO</div>
+  <div class="ov-bar"><div class="ov-fill" id="ov-fill"></div></div>
+  <div class="ov-msg" id="ov-msg">PROCESANDO...</div>
+</div>
+
+<!-- RADAR MODAL -->
+<div class="modal-bg" id="radar-modal" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="modal">
+    <button class="modal-x" onclick="document.getElementById('radar-modal').classList.remove('on')">✕</button>
+    <h2 id="rm-name">—</h2>
+    <div class="modal-brand" id="rm-brand">—</div>
+    <div class="modal-sec-title">Descripción</div><div class="modal-sec-val" id="rm-desc">—</div>
+    <div class="modal-sec-title">Claims</div><div class="modal-sec-val" id="rm-claims">—</div>
+    <div class="modal-sec-title">Disponibilidad</div><div class="modal-sec-val" id="rm-ret">—</div>
+    <div class="modal-sec-title">Precio</div><div class="modal-sec-val" id="rm-price">—</div>
+    <div class="modal-sec-title">Segmento / Categoría</div><div class="modal-sec-val" id="rm-cat">—</div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const S={packResult:null,shelfPkgs:[],packB64:null,packMime:'image/jpeg'};
+const PKG_COLORS=['#b8ff2e','#2effd4','#ff2eb8'];
+const PKG_EMOJIS=['📦','🧴','💊'];
+const COMP_COLORS=['#445','#554','#454','#645','#456','#554','#445','#564'];
+let radarProducts=[],radarLog=[];
+const RADAR_SRCS=['Walmart.com.mx',"Sam's Club MX",'Costco MX','Amazon.com.mx','MercadoLibre','Farmacias Ahorro','Benavides','Guadalajara'];
+const RET_COLORS={'Walmart':'var(--wm)',"Sam's Club":'var(--sm)','Costco':'var(--co)','Amazon MX':'#ff9900','Mercado Libre':'#ffe600','Farmacias Ahorro':'#00843d','Benavides':'#00843d','Guadalajara':'#00843d'};
+const SEG_TAG={'OTC':'tag-otc','Cuidado Personal':'tag-cp','Bebidas':'tag-bev','Fórmulas Infantiles':'tag-inf'};
+
+function gotoTool(t,el){document.querySelectorAll('.tool-panel').forEach(p=>p.classList.remove('on'));document.querySelectorAll('.ttab').forEach(b=>b.classList.remove('on'));document.getElementById('panel-'+t).classList.add('on');el.classList.add('on')}
+function chipToggle(el){el.classList.toggle('on')}
+function chipOne(el,g){document.querySelectorAll('#'+g+' .chip').forEach(c=>c.classList.remove('on'));el.classList.add('on')}
+function swatchToggle(el){el.classList.toggle('on')}
+function getChips(id){return[...document.querySelectorAll('#'+id+' .chip.on')].map(c=>c.textContent.trim())}
+function getAllChips(root){return[...root.querySelectorAll('.chip.on')].map(c=>c.textContent.trim())}
+
+let ovTimer;
+const OV_MSGS={pack:['ANALIZANDO COMPOSICIÓN VISUAL...','EVALUANDO CLAIMS...','CALCULANDO RETAILER FIT...','GENERANDO RECOMENDACIONES...'],shelf:['CARGANDO MOTORES DE SIMULACIÓN...','POSICIONANDO EN ANAQUEL...','MODELANDO COMPORTAMIENTO...','CALCULANDO BENCHMARKS...'],radar:['INICIANDO AGENTES DE BÚSQUEDA...','CONSULTANDO CATÁLOGOS OTC...','EXTRAYENDO CLAIMS Y PRECIOS...','COMPILANDO RESULTADOS...']};
+function showOv(tool){const ov=document.getElementById('overlay'),fill=document.getElementById('ov-fill');ov.classList.add('on');fill.style.animation='none';void fill.offsetWidth;fill.style.animation='fillbar 3.5s ease forwards';let i=0;ovTimer=setInterval(()=>{document.getElementById('ov-msg').textContent=OV_MSGS[tool][i++%OV_MSGS[tool].length]},1400)}
+function hideOv(){clearInterval(ovTimer);document.getElementById('overlay').classList.remove('on')}
+
+let toastTimer;
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),3000)}
+
+async function callClaude(messages){
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages})});
+  const d=await r.json();if(d.error)throw new Error(d.error.message);
+  return d.content.filter(b=>b.type==='text').map(b=>b.text).join('')
+}
+async function callClaudeSearch(messages){
+  const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,tools:[{type:'web_search_20250305',name:'web_search'}],messages})});
+  const d=await r.json();if(d.error)throw new Error(d.error.message);
+  return(d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('')
+}
+function parseJSON(text){
+  let c=text.replace(/```json/gi,'').replace(/```/g,'').trim();
+  // Try to grab the outermost JSON array first (radar returns array)
+  const arrM=c.match(/\[[\s\S]*\]/);
+  if(arrM){try{return JSON.parse(arrM[0])}catch(e1){}}
+  // Fall back to object
+  const objM=c.match(/\{[\s\S]*\}/);
+  if(objM){try{return JSON.parse(objM[0])}catch(e2){}}
+  return JSON.parse(c);
+}
+
+// PACK FILE
+function onPackFile(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{S.packB64=ev.target.result.split(',')[1];S.packMime=file.type||'image/jpeg';const p=document.getElementById('pack-preview');p.src=ev.target.result;p.style.display='block';document.getElementById('pack-zone').style.display='none'};
+  reader.readAsDataURL(file)
+}
+const pz=document.getElementById('pack-zone');
+pz.addEventListener('dragover',e=>{e.preventDefault();pz.classList.add('drag')});
+pz.addEventListener('dragleave',()=>pz.classList.remove('drag'));
+pz.addEventListener('drop',e=>{e.preventDefault();pz.classList.remove('drag');const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/')){document.getElementById('pack-file').files=e.dataTransfer.files;document.getElementById('pack-file').dispatchEvent(new Event('change'))}});
+
+async function runPackScore(){
+  const cat=document.getElementById('pack-cat').value,price=document.getElementById('pack-price').value,
+    format=getChips('pack-format')[0]||'',
+    claims=[...getChips('pack-claims'),document.getElementById('pack-extra-claim').value].filter(Boolean).join(', '),
+    retailers=getChips('pack-retailers'),colors=[...document.querySelectorAll('.swatch.on')].map(s=>s.title);
+  if(!cat&&!claims&&!S.packB64){toast('Ingresa al menos categoría, claims o sube un render');return}
+  document.getElementById('pack-btn').disabled=true;showOv('pack');
+  const prompt=`Eres experto en shopper marketing y diseño de empaque para el mercado mexicano. Analiza este empaque de Genomma Lab.\nParámetros:\n- Categoría: ${cat||'No especificada'}\n- Precio/Oferta: ${price||'No especificado'}\n- Formato: ${format||'No especificado'}\n- Claims: ${claims||'Ninguno'}\n- Colores: ${colors.join(', ')||'No especificados'}\n- Cadenas: ${retailers.join(', ')||'General'}\n${S.packB64?'- Se incluye imagen del empaque.':''}\n\nDevuelve ÚNICAMENTE JSON válido (sin backticks):\n{"score":<0-100>,"verdict":"ALTO POTENCIAL|POTENCIAL MEDIO|REQUIERE AJUSTES","title":"<6 palabras>","summary":"<2 oraciones>","criteria":[{"name":"Impacto Visual","score":<0-100>,"color":"#b8ff2e","note":"<breve>"},{"name":"Claridad de Claims","score":<0-100>,"color":"#2effd4","note":"<breve>"},{"name":"Percepción de Valor","score":<0-100>,"color":"#ffb82e","note":"<breve>"},{"name":"Fit de Formato","score":<0-100>,"color":"#ff2eb8","note":"<breve>"},{"name":"Diferenciación","score":<0-100>,"color":"#a04af0","note":"<breve>"},{"name":"Adaptación Retail","score":<0-100>,"color":"#4a8af0","note":"<breve>"}],"retailer_fit":[{"name":"Walmart","score":<0-100>},{"name":"Sam's Club","score":<0-100>},{"name":"Costco","score":<0-100>}],"recommendations":[{"priority":"high","text":"<rec>"},{"priority":"high","text":"<rec>"},{"priority":"medium","text":"<rec>"},{"priority":"medium","text":"<rec>"},{"priority":"low","text":"<rec>"}]}`;
+  try{
+    const content=[];
+    if(S.packB64)content.push({type:'image',source:{type:'base64',media_type:S.packMime,data:S.packB64}});
+    content.push({type:'text',text:prompt});
+    const text=await callClaude([{role:'user',content}]);
+    const r=parseJSON(text);r._cat=cat;r._claims=claims;r._price=price;r._format=format;S.packResult=r;
+    hideOv();document.getElementById('pack-btn').disabled=false;
+    renderPackResults(r);updateFlowState();toast(`PackScore: ${r.score}/100`)
+  }catch(err){hideOv();document.getElementById('pack-btn').disabled=false;toast('Error: '+err.message);console.error(err)}
+}
+
+function renderPackResults(r){
+  const sc=r.score,col=sc>=75?'var(--lime)':sc>=50?'var(--amber)':'var(--pink)',circum=289,offset=circum-(sc/100)*circum,vbg=sc>=75?'rgba(184,255,46,.12)':sc>=50?'rgba(255,184,46,.12)':'rgba(255,46,184,.12)';
+  let html=`<div class="section-hd" style="color:var(--c-pack)">Resultado del Análisis</div>
+  <div class="card" style="margin-bottom:18px">
+    <div class="score-header">
+      <div class="ring-wrap"><svg width="110" height="110" viewBox="0 0 110 110"><circle cx="55" cy="55" r="46" fill="none" stroke="var(--border)" stroke-width="8"/><circle cx="55" cy="55" r="46" fill="none" stroke="${col}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${circum}" stroke-dashoffset="${offset}" style="transition:stroke-dashoffset 1.2s ease"/></svg><div class="ring-num"><span style="color:${col}">${sc}</span><span class="ring-sub">/100</span></div></div>
+      <div><div class="vbadge" style="background:${vbg};color:${col};margin-bottom:8px">${r.verdict}</div><div style="font-family:'Bebas Neue',sans-serif;font-size:20px;margin-bottom:6px">${r.title}</div><div style="font-size:12px;color:var(--muted);line-height:1.6;max-width:360px">${r.summary}</div></div>
+    </div>
+    <div class="criteria-grid">${r.criteria.map(c=>`<div class="criterion"><div class="crit-hd"><span class="crit-name">${c.name}</span><span class="crit-score" style="color:${c.color}">${c.score}</span></div><div class="crit-bar"><div class="crit-fill" style="width:0%;background:${c.color}" data-w="${c.score}"></div></div><div class="crit-note">${c.note}</div></div>`).join('')}</div>
+  </div>
+  <div class="card" style="margin-bottom:18px;padding:16px"><div class="section-hd">Fit por Cadena</div>${r.retailer_fit.map(rf=>{const rc=rf.name==='Walmart'?'var(--wm)':rf.name==="Sam's Club"?'var(--sm)':'var(--co)';return`<div class="retailer-row"><span class="retailer-name">${rf.name}</span><div class="ret-bar"><div class="ret-fill" style="width:0%;background:${rc}" data-w="${rf.score}"></div></div><span class="ret-pct">${rf.score}%</span></div>`}).join('')}</div>
+  <div class="card" style="padding:16px;margin-bottom:18px"><div class="section-hd">Recomendaciones</div>${r.recommendations.map(rec=>`<div class="rec ${rec.priority==='high'?'crit':rec.priority==='medium'?'warn':'ok'}"><strong>${rec.priority==='high'?'🔴 Crítico':rec.priority==='medium'?'🟡 Mejora':'🟢 Oportunidad'}</strong>${rec.text}</div>`).join('')}</div>
+  <button onclick="sendPackToShelf()" style="width:100%;background:rgba(46,255,212,.08);border:1px solid rgba(46,255,212,.3);color:var(--c-shelf);border-radius:6px;padding:11px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">→ Enviar a ShelfSim</button>
+  <button onclick="sendPackToRadar()" style="width:100%;background:rgba(255,46,184,.08);border:1px solid rgba(255,46,184,.3);color:var(--c-radar);border-radius:6px;padding:11px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">📡 Ver competencia en OTC Radar</button>`;
+  const el=document.getElementById('pack-results');el.innerHTML=html;
+  setTimeout(()=>{el.querySelectorAll('.crit-fill[data-w]').forEach(b=>b.style.width=b.dataset.w+'%');el.querySelectorAll('.ret-fill[data-w]').forEach(b=>b.style.width=b.dataset.w+'%')},120)
+}
+
+// SHELF SLOTS
+renderShelfSlots();
+function renderShelfSlots(){
+  const c=document.getElementById('shelf-slots');c.innerHTML='';
+  S.shelfPkgs.forEach((pkg,i)=>{const d=document.createElement('div');d.className='pkg-slot filled';d.innerHTML=`<div class="pkg-thumb">${pkg.dataUrl?`<img src="${pkg.dataUrl}">`:PKG_EMOJIS[i]}</div><div><div class="pkg-slot-name" style="color:${pkg.color}">${pkg.name}</div><div class="pkg-slot-sub">Empaque ${i+1}</div></div><button class="pkg-rm" onclick="removePkg(${i})">✕</button>`;c.appendChild(d)});
+  if(S.shelfPkgs.length<3){const idx=S.shelfPkgs.length,d=document.createElement('div');d.className='pkg-slot';d.innerHTML=`<input type="file" accept="image/*" onchange="addPkg(event,${idx})"><div class="pkg-thumb">${PKG_EMOJIS[idx]}</div><div><div class="pkg-slot-name" style="color:var(--muted)">Agregar empaque ${idx+1}</div><div class="pkg-slot-sub">Click o arrastra</div></div>`;c.appendChild(d)}
+}
+function addPkg(e,idx){const file=e.target.files[0];if(!file)return;const reader=new FileReader();reader.onload=ev=>{S.shelfPkgs.push({id:Date.now(),name:file.name.replace(/\.[^.]+$/,'').substring(0,22),file,dataUrl:ev.target.result,color:PKG_COLORS[S.shelfPkgs.length%3],b64:ev.target.result.split(',')[1],mime:file.type||'image/jpeg'});renderShelfSlots()};reader.readAsDataURL(file)}
+function removePkg(i){S.shelfPkgs.splice(i,1);renderShelfSlots()}
+
+async function runShelfSim(){
+  if(!S.shelfPkgs.length){toast('Sube al menos un empaque');return}
+  const cat=document.getElementById('shelf-cat').value||'OTC General',price=document.getElementById('shelf-price').value||'No especificado',claims=document.getElementById('shelf-claims').value||'No especificados',channels=getAllChips(document.getElementById('shelf-channels')),pos=getChips('shelf-pos')[0]||'Eye Level';
+  document.getElementById('shelf-btn').disabled=true;showOv('shelf');
+  const prompt=`Eres experto en shopper marketing para México. Analiza ${S.shelfPkgs.length} empaque(s).\nCategoría: ${cat}\nPrecio: ${price}\nClaims: ${claims}\nCanales: ${channels.join(', ')}\nPosición: ${pos}\n\nDevuelve ÚNICAMENTE JSON válido (sin backticks):\n{"packages":[{"name":"<nombre>","overall_score":<0-100>,"scores":{"shelf_visibility":<0-100>,"competitive_edge":<0-100>,"promo_effectiveness":<0-100>,"consumer_appeal":<0-100>},"channel_scores":{"Walmart":<0-100>,"Sam's Club":<0-100>,"Costco":<0-100>},"shelf_share_estimate":"<NN%>","verdict":"<2 oraciones>","sentiment":{"confianza":<0-100>,"deseo":<0-100>,"claridad":<0-100>}}],"recommendations":[{"priority":"critical","tag":"ANAQUEL","text":"<rec>"},{"priority":"critical","tag":"CLAIM","text":"<rec>"},{"priority":"warning","tag":"COLOR","text":"<rec>"},{"priority":"ok","tag":"FORTALEZA","text":"<rec>"}],"consumer_insights":{"first_impression":"<3s>","purchase_triggers":["<t1>","<t2>","<t3>"],"friction_points":["<f1>","<f2>"]}}\nIncluye exactamente ${S.shelfPkgs.length} objeto(s) en packages.`;
+  try{
+    const content=[];S.shelfPkgs.forEach((pkg,i)=>{content.push({type:'image',source:{type:'base64',media_type:pkg.mime,data:pkg.b64}});content.push({type:'text',text:`[Empaque ${i+1}: "${pkg.name}"]`})});content.push({type:'text',text:prompt});
+    const text=await callClaude([{role:'user',content}]);
+    const r=parseJSON(text);r._pkgs=S.shelfPkgs.map(p=>({name:p.name,dataUrl:p.dataUrl,color:p.color}));r._channel=channels[0]||'Walmart';r._price=price;r._cat=cat;
+    hideOv();document.getElementById('shelf-btn').disabled=false;renderShelfResults(r);updateFlowState('shelf');toast('Simulación completada ✓')
+  }catch(err){hideOv();document.getElementById('shelf-btn').disabled=false;toast('Error: '+err.message);console.error(err)}
+}
+
+function renderShelfResults(r){
+  const el=document.getElementById('shelf-results'),n=r._pkgs.length;
+  const chC={'Walmart':{bg:'#004c97',hd:'#0071ce',tx:'#fff'},"Sam's Club":{bg:'#001a6e',hd:'#0032a0',tx:'#fff'},'Costco':{bg:'#6b0000',hd:'#e8192c',tx:'#fff'}};
+  const ch=chC[r._channel]||chC['Walmart'],chName=r._channel;
+  const compItems=(count,h,w)=>Array(count).fill(0).map((_,i)=>`<div class="sp"><div class="sp-ph" style="width:${w||40+(i%3)*8}px;height:${h||70+(i%4)*15}px;background:${COMP_COLORS[i%COMP_COLORS.length]}"></div><div class="sp-lbl">Comp</div></div>`).join('');
+  const ourItems=r._pkgs.map((pkg,pi)=>{const isFocal=pi===0,pt=r._price&&r._price!=='No especificado'?`<div class="ptag">${r._price.substring(0,8)}</div>`:'';return`<div class="sp ${isFocal?'focal':''}" style="position:relative">${pkg.dataUrl?`<img class="sp-img" src="${pkg.dataUrl}" style="width:50px;height:90px;object-fit:contain">`:`<div class="sp-ph" style="width:50px;height:90px;background:${pkg.color}22;border:2px solid ${pkg.color};color:${pkg.color}">${pkg.name.substring(0,6)}</div>`}${pt}<div class="sp-lbl" style="color:${pkg.color}">${pkg.name.substring(0,10)}</div></div><div class="sp"><div class="sp-ph" style="width:50px;height:90px;background:${pkg.color}0a;border:1px solid ${pkg.color}33"></div><div class="sp-lbl" style="color:var(--dim)">${pkg.name.substring(0,8)}</div></div>`}).join('');
+  const dims=[{k:'shelf_visibility',l:'Visibilidad Anaquel',c:'var(--lime)'},{k:'competitive_edge',l:'Ventaja Competitiva',c:'var(--cyan)'},{k:'promo_effectiveness',l:'Efectividad Promo',c:'var(--amber)'},{k:'consumer_appeal',l:'Atractivo Consumidor',c:'var(--pink)'}];
+  let html=`<div class="section-hd" style="color:var(--c-shelf)">Simulación de Anaquel<div class="ch-btns" style="margin-left:auto;margin-bottom:0">${['Walmart',"Sam's Club",'Costco'].map((c,i)=>`<button class="ch-btn ${i===0?'on '+['wm','sm','co'][i]:''}" onclick="switchCh(this,'${['wm','sm','co'][i]}','${c}')">${c}</button>`).join('')}</div></div>
+  <div class="shelf-scene"><div class="shelf-unit" id="shelf-unit-inner" style="border-color:${ch.bg}"><div class="shelf-store-hd" style="background:${ch.hd};color:${ch.tx}">${chName.toUpperCase()}</div><div style="position:relative"><div class="shelf-row">${compItems(10)}</div><div class="eye-line" style="top:0"></div><div class="shelf-row">${compItems(3,90,42)} ${ourItems} ${compItems(3,90,42)}</div></div><div class="shelf-row">${compItems(10,60,36)}</div></div><div class="shelf-metrics"><div class="sm"><div class="sm-val" style="color:var(--c-shelf)">${r.packages[0]?.scores?.shelf_visibility||75}</div><div class="sm-lbl">Score Visual</div></div><div class="sm"><div class="sm-val" style="color:var(--cyan)">${r.packages[0]?.shelf_share_estimate||'18%'}</div><div class="sm-lbl">Share of Shelf</div></div><div class="sm"><div class="sm-val" style="color:var(--amber)">${getChips('shelf-pos')[0]||'Eye Level'}</div><div class="sm-lbl">Posición</div></div></div></div>
+  <div class="section-hd" style="color:var(--c-shelf)">Predicción por Empaque</div>
+  <div class="cmp-grid n${n}" style="margin-bottom:20px">${r.packages.map((pkg,i)=>{const meta=r._pkgs[i]||{},ov=pkg.overall_score,oc=ov>=75?'var(--lime)':ov>=50?'var(--amber)':'var(--pink)';return`<div class="cmp-card" style="animation-delay:${i*.1}s;border-top:3px solid ${meta.color||'var(--lime)'}"><div class="cmp-card-hd"><div class="cmp-thumb">${meta.dataUrl?`<img src="${meta.dataUrl}">`:'📦'}</div><div class="cmp-name">${pkg.name}</div><div class="cmp-ovr" style="color:${oc}">${ov}</div></div><div class="cmp-body">${dims.map(d=>`<div class="bar-row"><span class="bar-label">${d.l}</span><div class="bar-track"><div class="bar-fill" style="width:0%;background:${d.c}" data-w="${pkg.scores[d.k]||0}"></div></div><span class="bar-val" style="color:${d.c}">${pkg.scores[d.k]||0}</span></div>`).join('')}<div class="cmp-verdict">${pkg.verdict}</div></div></div>`}).join('')}</div>
+  <div class="section-hd" style="color:var(--c-shelf)">Sentimiento del Consumidor</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">${[['Confianza','🛡️','confianza','var(--cyan)'],['Deseo','💚','deseo','var(--pink)'],['Claridad','💡','claridad','var(--lime)']].map(([l,e,k,c])=>`<div class="card" style="padding:14px;text-align:center"><div style="font-size:26px;margin-bottom:6px">${e}</div><div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">${l}</div><div style="font-family:'Bebas Neue',sans-serif;font-size:30px;color:${c}">${r.packages[0]?.sentiment?.[k]||70}</div></div>`).join('')}</div>
+  <div class="section-hd" style="color:var(--c-shelf)">Insights del Consumidor</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
+    <div class="card" style="padding:14px"><div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Primera Impresión (3s)</div><div style="font-style:italic;font-size:12px;color:var(--muted);line-height:1.6">"${r.consumer_insights?.first_impression||'—'}"</div></div>
+    <div class="card" style="padding:14px"><div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Triggers de Compra</div>${(r.consumer_insights?.purchase_triggers||[]).map(t=>`<div style="font-size:12px;color:var(--muted);margin-bottom:4px;display:flex;gap:6px"><span style="color:var(--lime)">▸</span>${t}</div>`).join('')}</div>
+    <div class="card" style="padding:14px"><div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Puntos de Fricción</div>${(r.consumer_insights?.friction_points||[]).map(t=>`<div style="font-size:12px;color:var(--muted);margin-bottom:4px;display:flex;gap:6px"><span style="color:var(--pink)">!</span>${t}</div>`).join('')}</div>
+    <div class="card" style="padding:14px"><div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Scores por Canal</div>${['Walmart',"Sam's Club",'Costco'].map((ch,i)=>{const v=r.packages[0]?.channel_scores?.[ch]||70,bc=['var(--wm)','var(--sm)','var(--co)'][i];return`<div class="bar-row"><span class="bar-label">${ch}</span><div class="bar-track"><div class="bar-fill" style="width:0%;background:${bc}" data-w="${v}"></div></div><span class="bar-val">${v}</span></div>`}).join('')}</div>
+  </div>
+  <div class="section-hd" style="color:var(--c-shelf)">Recomendaciones</div>
+  ${(r.recommendations||[]).map(rec=>`<div class="rec ${rec.priority==='critical'?'crit':rec.priority==='warning'?'warn':'ok'}"><strong>${rec.tag}</strong>${rec.text}</div>`).join('')}
+  <button onclick="sendShelfToRadar()" style="width:100%;margin-top:12px;background:rgba(255,46,184,.08);border:1px solid rgba(255,46,184,.3);color:var(--c-radar);border-radius:6px;padding:11px;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.08em;text-transform:uppercase">📡 Ver competencia en OTC Radar</button>`;
+  el.innerHTML=html;setTimeout(()=>el.querySelectorAll('.bar-fill[data-w]').forEach(b=>b.style.width=b.dataset.w+'%'),120)
+}
+
+function switchCh(btn,cls,name){
+  document.querySelectorAll('.ch-btn').forEach(b=>b.className='ch-btn');btn.className=`ch-btn on ${cls}`;
+  const c={'Walmart':{bg:'#004c97',hd:'#0071ce',tx:'#fff'},"Sam's Club":{bg:'#001a6e',hd:'#0032a0',tx:'#fff'},'Costco':{bg:'#6b0000',hd:'#e8192c',tx:'#fff'}}[name]||{bg:'#004c97',hd:'#0071ce',tx:'#fff'};
+  const u=document.getElementById('shelf-unit-inner');if(u){u.style.borderColor=c.bg;u.querySelector('.shelf-store-hd').style.background=c.hd;u.querySelector('.shelf-store-hd').textContent=name.toUpperCase()}
+}
+
+// RADAR
+function rLog(msg){const time=new Date().toLocaleTimeString('es-MX',{hour:'2-digit',minute:'2-digit',second:'2-digit'});radarLog.unshift({time,msg});if(radarLog.length>8)radarLog.pop();document.getElementById('r-log').innerHTML=radarLog.map(l=>`<div class="log-item"><span class="log-t">${l.time}</span> — ${l.msg}</div>`).join('')}
+
+async function runRadar(){
+  const retailers=getAllChips(document.getElementById('radar-retailers'));
+  const catChips=getAllChips(document.getElementById('radar-cats'));
+  if(!retailers.length||!catChips.length){toast('Selecciona al menos una cadena y categoría');return}
+  document.getElementById('radar-btn').disabled=true;
+  const sa=document.getElementById('radar-scan-anim');sa.classList.add('on');document.getElementById('radar-feed').innerHTML='';
+  document.getElementById('radar-sources').innerHTML=RADAR_SRCS.map(s=>`<div class="scan-src">${s}</div>`).join('');
+  let si=0;const srcT=setInterval(()=>{document.querySelectorAll('.scan-src').forEach(s=>s.classList.remove('lit'));const srcs=document.querySelectorAll('.scan-src');if(srcs[si%srcs.length])srcs[si++%srcs.length].classList.add('lit')},900);
+  const msgs=['INICIANDO AGENTES...','CONSULTANDO CATÁLOGOS...','IDENTIFICANDO LANZAMIENTOS...','EXTRAYENDO CLAIMS...','COMPILANDO RESULTADOS...'];let mi=0;
+  const msgT=setInterval(()=>{document.getElementById('radar-scan-msg').textContent=msgs[mi++%msgs.length]},1400);
+  rLog(`Escaneo iniciado — ${retailers.length} cadenas, ${catChips.length} categorías`);
+  const today=new Date().toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'});
+  const prompt=`Eres analista de inteligencia competitiva para consumer goods en México. Hoy es ${today}. Usa web search para encontrar productos lanzados recientemente (últimos 6 meses) en estas cadenas: ${retailers.join(', ')}. Categorías objetivo: ${catChips.join(', ')}. Busca términos como nuevos productos Mexico ${new Date().getFullYear()}, lanzamientos OTC Mexico, nueva formula empaque. Marcas: Genomma Lab, Bayer, Liomont, Pfizer, Chinoin, L'Oreal, Unilever, P&G, Nestle, Abbott, Gerber, Coca-Cola, PepsiCo, Danone. IMPORTANTE: responde SOLO con un JSON array, sin texto antes ni después, sin bloques de código, sin backticks, empezando directamente con [ y terminando con ]. Formato de cada objeto: {"name":"nombre completo del producto","brand":"marca fabricante","segment":"OTC","category":"categoria especifica","retailers":["Walmart","Costco"],"price":"$X MXN","description":"descripcion breve","claims":"claims marketing","launch_date":"fecha aproximada","is_new":true}. Devuelve entre 8 y 14 productos reales.`;
+  try{
+    const text=await callClaudeSearch([{role:'user',content:prompt}]);
+    const products=parseJSON(text);radarProducts=products;
+    clearInterval(srcT);clearInterval(msgT);sa.classList.remove('on');document.getElementById('radar-btn').disabled=false;
+    renderRadarFeed(products);renderRadarSidebars(products,retailers);
+    document.getElementById('r-stat-total').textContent=products.length;
+    document.getElementById('r-stat-brands').textContent=new Set(products.map(p=>p.brand)).size;
+    document.getElementById('r-stat-ret').textContent=retailers.length;
+    document.getElementById('r-stat-cats').textContent=new Set(products.map(p=>p.category)).size;
+    updateFlowState('radar');rLog(`Escaneo completado — ${products.length} productos`);toast(`${products.length} productos detectados ✓`)
+  }catch(err){
+    clearInterval(srcT);clearInterval(msgT);sa.classList.remove('on');
+    document.getElementById('radar-btn').disabled=false;
+    const msg=err.message||'Error desconocido';
+    rLog('Error: '+msg);
+    document.getElementById('radar-feed').innerHTML='<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Error al escanear</div><div class="empty-sub">'+msg+'<br><br>Intenta de nuevo o reduce las categorías seleccionadas.</div></div>';
+    console.error(err);
+  }
+}
+
+function getRetTag(r){if(r.includes('Walmart'))return'tag-wm';if(r.includes('Sam'))return'tag-sm';if(r.includes('Costco'))return'tag-co';if(r.includes('Amazon'))return'tag-amz';if(r.includes('Libre'))return'tag-ml';return'tag-pharma'}
+
+function renderRadarFeed(products){
+  const q=document.getElementById('radar-search').value.toLowerCase();
+  const filtered=q?products.filter(p=>(p.name+p.brand+p.category).toLowerCase().includes(q)):products;
+  const el=document.getElementById('radar-feed');
+  if(!filtered.length){el.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">Sin resultados</div></div>';return}
+  el.innerHTML=filtered.map((p,i)=>`<div class="product-card" style="animation-delay:${i*.05}s" onclick="openRadarModal(${radarProducts.indexOf(p)})"><div class="pc-rank">${String(i+1).padStart(2,'0')}</div><div><div class="pc-meta">${p.is_new?'<span class="tag tag-new">NUEVO</span>':''}${p.segment?`<span class="tag ${SEG_TAG[p.segment]||'tag-cat'}">${p.segment}</span>`:''}${(p.retailers||[]).slice(0,2).map(r=>`<span class="tag ${getRetTag(r)}">${r.replace('Farmacias ','').replace(' México','')}</span>`).join('')}<span class="tag tag-cat">${p.category}</span></div><div class="pc-name">${p.name}</div><div class="pc-brand">${p.brand} · ${p.launch_date||'Lanzamiento reciente'}</div><div class="pc-claims">${p.claims?`<strong>Claims:</strong> ${p.claims.substring(0,90)}${p.claims.length>90?'…':''}`:''}</div></div><div><div class="pc-price">${p.price||'—'}<span class="pc-price-lbl">precio est.</span></div></div></div>`).join('')
+}
+
+function filterRadar(){if(radarProducts.length)renderRadarFeed(radarProducts)}
+
+function renderRadarSidebars(products,retailers){
+  const rc={};products.forEach(p=>(p.retailers||[]).forEach(r=>{rc[r]=(rc[r]||0)+1}));const maxR=Math.max(...Object.values(rc),1);
+  document.getElementById('r-ret-list').innerHTML=Object.entries(rc).sort((a,b)=>b[1]-a[1]).map(([r,c])=>`<div class="ret-line"><span class="ret-n">${r.replace('Farmacias ','')}</span><div class="ret-bw"><div class="ret-bf" style="width:${(c/maxR)*100}%;background:${RET_COLORS[r]||'#555'}"></div></div><span class="ret-ct">${c}</span></div>`).join('');
+  const cc={};products.forEach(p=>{cc[p.category]=(cc[p.category]||0)+1});
+  document.getElementById('r-cat-list').innerHTML=Object.entries(cc).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`<div class="cat-row"><span class="cat-n">${c}</span><span class="cat-ct">${n}</span></div>`).join('')
+}
+
+function openRadarModal(idx){
+  const p=radarProducts[idx];if(!p)return;
+  document.getElementById('rm-name').textContent=p.name;document.getElementById('rm-brand').textContent=`${p.brand} · ${p.launch_date||'—'}`;
+  document.getElementById('rm-desc').textContent=p.description||'—';document.getElementById('rm-claims').textContent=p.claims||'—';
+  document.getElementById('rm-ret').textContent=(p.retailers||[]).join(', ')||'—';document.getElementById('rm-price').textContent=p.price||'—';
+  document.getElementById('rm-cat').textContent=`${p.segment||''} / ${p.category||'—'}`;document.getElementById('radar-modal').classList.add('on')
+}
+
+function exportRadarCSV(){
+  if(!radarProducts.length){toast('Sin datos para exportar');return}
+  const hdr=['Nombre','Marca','Segmento','Categoría','Cadenas','Precio','Claims','Lanzamiento','Descripción'];
+  const rows=radarProducts.map(p=>[p.name,p.brand,p.segment,p.category,(p.retailers||[]).join('|'),p.price,p.claims,p.launch_date,p.description].map(v=>`"${(v||'').replace(/"/g,'""')}"`));
+  const csv=[hdr,...rows].map(r=>r.join(',')).join('\n');
+  const a=Object.assign(document.createElement('a'),{href:URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'})),download:`OTC_Radar_${new Date().toISOString().slice(0,10)}.csv`});a.click();rLog('CSV exportado')
+}
+
+// HANDOFFS
+function sendPackToShelf(){
+  const r=S.packResult;if(!r)return;
+  const catEl=document.getElementById('shelf-cat');if(r._cat)for(let o of catEl.options)if(o.value===r._cat){catEl.value=r._cat;break}
+  if(r._claims)document.getElementById('shelf-claims').value=r._claims;
+  if(r._price)document.getElementById('shelf-price').value=r._price;
+  if(S.packB64&&S.shelfPkgs.length===0){S.shelfPkgs.push({id:Date.now(),name:'Empaque evaluado',dataUrl:`data:${S.packMime};base64,${S.packB64}`,color:PKG_COLORS[0],b64:S.packB64,mime:S.packMime});renderShelfSlots()}
+  document.getElementById('hb-shelf-items').innerHTML=`<div class="hb-item"><span>Score:</span>${r.score}/100</div><div class="hb-item"><span>Veredicto:</span>${r.verdict||'—'}</div><div class="hb-item"><span>Categoría:</span>${r._cat||'—'}</div>`;
+  document.getElementById('hb-shelf').classList.add('on');
+  gotoTool('shelf',document.querySelector('[data-t="shelf"]'));toast('Datos enviados a ShelfSim ✓');
+  document.getElementById('arr1').classList.add('live');document.getElementById('arr1').textContent='⟶'
+}
+
+function sendPackToRadar(){
+  const r=S.packResult;if(!r)return;
+  if(r._cat)document.querySelectorAll('#panel-radar .chip').forEach(chip=>{if(chip.textContent.trim().toLowerCase().includes(r._cat.toLowerCase().substring(0,6))&&!chip.classList.contains('on'))chip.classList.add('on')});
+  document.getElementById('hb-radar-items').innerHTML=`<div class="hb-item"><span>Categoría:</span>${r._cat||'—'}</div><div class="hb-item"><span>PackScore:</span>${r.score}/100</div>`;
+  document.getElementById('hb-radar').classList.add('on');gotoTool('radar',document.querySelector('[data-t="radar"]'));toast('Contexto enviado a OTC Radar ✓')
+}
+
+function sendShelfToRadar(){
+  document.getElementById('hb-radar-items').innerHTML=`<div class="hb-item"><span>Desde:</span>ShelfSim</div><div class="hb-item"><span>Acción:</span>Escanear competencia</div>`;
+  document.getElementById('hb-radar').classList.add('on');gotoTool('radar',document.querySelector('[data-t="radar"]'));toast('Cambiado a OTC Radar ✓')
+}
+
+function updateFlowState(lastTool){
+  document.getElementById('flow-led').classList.add('on');
+  if(lastTool==='radar'){document.getElementById('flow-lbl').textContent='Pipeline completo ✓';document.getElementById('badge-radar').textContent='✓ SCAN';document.getElementById('badge-radar').classList.add('show');document.getElementById('arr2').classList.add('live');document.getElementById('arr2').textContent='⟶'}
+  else if(lastTool==='shelf'){document.getElementById('flow-lbl').textContent='PackScore → ShelfSim ✓';document.getElementById('badge-shelf').textContent='✓ SIM';document.getElementById('badge-shelf').classList.add('show')}
+  else{document.getElementById('flow-lbl').textContent=`PackScore: ${S.packResult?.score}/100`;document.getElementById('badge-pack').textContent=`${S.packResult?.score}/100`;document.getElementById('badge-pack').classList.add('show')}
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA')return;
+  if(e.key==='1')gotoTool('pack',document.querySelector('[data-t="pack"]'));
+  if(e.key==='2')gotoTool('shelf',document.querySelector('[data-t="shelf"]'));
+  if(e.key==='3')gotoTool('radar',document.querySelector('[data-t="radar"]'));
+});
+</script>
+</body>
+</html>
