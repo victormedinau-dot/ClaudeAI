@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Análisis de Cargas – Estibas</title>
+  <style>
+    :root {
+      --primary:#1a56db; --primary-light:#e8f0fe;
+      --success:#057a55; --success-light:#def7ec;
+      --warning:#c27803; --warning-light:#fdf6b2;
+      --danger:#c81e1e;  --danger-light:#fde8e8;
+      --gray:#6b7280; --bg:#f3f4f6; --card:#fff;
+      --border:#e5e7eb; --text:#111827; --muted:#6b7280;
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+    header{background:linear-gradient(135deg,#1a3a6b,#1a56db);color:#fff;padding:22px 32px;display:flex;align-items:center;gap:16px;box-shadow:0 4px 12px rgba(26,86,219,.25)}
+    header .ico{font-size:2.2rem}
+    header h1{font-size:1.4rem;font-weight:700;letter-spacing:-.4px}
+    header p{font-size:.8rem;opacity:.78;margin-top:2px}
+
+    main{max-width:1340px;margin:28px auto;padding:0 20px;display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    @media(max-width:860px){main{grid-template-columns:1fr}}
+    .full{grid-column:1/-1}
+
+    .card{background:var(--card);border-radius:12px;box-shadow:0 1px 4px rgba(0,0,0,.08);overflow:hidden}
+    .ch{padding:13px 18px;font-weight:700;font-size:.88rem;display:flex;align-items:center;gap:9px;border-bottom:1px solid var(--border)}
+    .ch .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+    .cb{padding:18px}
+
+    .sec-blue  .ch{background:var(--primary-light);color:var(--primary)} .sec-blue  .dot{background:var(--primary)}
+    .sec-green .ch{background:var(--success-light);color:var(--success)} .sec-green .dot{background:var(--success)}
+    .sec-yel   .ch{background:var(--warning-light);color:var(--warning)} .sec-yel   .dot{background:var(--warning)}
+    .sec-red   .ch{background:var(--danger-light); color:var(--danger)}  .sec-red   .dot{background:var(--danger)}
+    .sec-gray  .ch{background:#f9fafb;color:#374151}                     .sec-gray  .dot{background:#9ca3af}
+
+    .fg{display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:12px}
+    .field label{display:block;font-size:.72rem;font-weight:600;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.4px}
+    .field input,.field select{width:100%;padding:7px 10px;border:1px solid var(--border);border-radius:7px;font-size:.87rem;color:var(--text);background:#fff;transition:border .2s}
+    .field input:focus,.field select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(26,86,219,.1)}
+
+    .rt{width:100%;border-collapse:collapse}
+    .rt tr+tr{border-top:1px solid var(--border)}
+    .rt td{padding:8px 10px;font-size:.86rem}
+    .rt td:first-child{color:var(--muted);width:58%}
+    .rt td:last-child{font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+    .rt tr.hi td{background:#f0f7ff}
+
+    .ft{width:100%;border-collapse:collapse}
+    .ft th{background:var(--bg);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:7px 10px;text-align:left;color:var(--muted)}
+    .ft tr+tr{border-top:1px solid var(--border)}
+    .ft td{padding:8px 10px;font-size:.86rem;vertical-align:middle}
+    .ft td:nth-child(2){text-align:center}
+    .ft td:last-child{text-align:right}
+    .ft .sub{font-size:.7rem;color:var(--muted);margin-top:2px;display:block}
+    .ft input[type=number],.ft select{width:100%;padding:5px 8px;border:1px solid var(--border);border-radius:6px;font-size:.85rem;background:#fff;transition:border .2s}
+    .ft input:focus,.ft select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(26,86,219,.1)}
+
+    .badge{display:inline-block;padding:2px 9px;border-radius:999px;font-size:.72rem;font-weight:600}
+    .bg-p{background:var(--primary-light);color:var(--primary)}
+    .bg-g{background:var(--success-light);color:var(--success)}
+    .bg-y{background:var(--warning-light);color:var(--warning)}
+    .bg-r{background:var(--danger-light); color:var(--danger)}
+    .bg-n{background:var(--bg);color:var(--gray)}
+
+    .bigs{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:14px}
+    .bcard{border-radius:10px;padding:14px;text-align:center;border:1px solid var(--border)}
+    .bcard .bl{font-size:.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);margin-bottom:5px}
+    .bcard .bv{font-size:1.4rem;font-weight:800}
+    .bcard .bu{font-size:.72rem;color:var(--muted);margin-top:1px}
+    .bc-p{background:var(--primary-light)} .bc-p .bv{color:var(--primary)}
+    .bc-g{background:var(--success-light)} .bc-g .bv{color:var(--success)}
+    .bc-y{background:var(--warning-light)} .bc-y .bv{color:var(--warning)}
+    .bc-r{background:var(--danger-light)}  .bc-r .bv{color:var(--danger)}
+
+    .fml{background:#1e293b;color:#7dd3fc;border-radius:8px;padding:11px 14px;font-family:'Cascadia Code','Fira Code',monospace;font-size:.8rem;margin-bottom:10px;overflow-x:auto;line-height:1.6}
+    .fml .res{color:#86efac;font-weight:700}
+    .fml .hi{color:#fbbf24}
+
+    .alert{border-radius:10px;padding:13px 16px;font-size:.86rem;display:flex;align-items:flex-start;gap:10px}
+    .alert-g{background:var(--success-light);color:var(--success)}
+    .alert-y{background:var(--warning-light);color:var(--warning)}
+    .alert-r{background:var(--danger-light); color:var(--danger)}
+
+    .bar-wrap{height:8px;border-radius:999px;background:var(--border);overflow:hidden;margin-top:5px}
+    .bar-fill{height:100%;border-radius:999px;transition:width .4s}
+
+    .btn{display:inline-flex;align-items:center;gap:7px;background:var(--primary);color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:.88rem;font-weight:600;cursor:pointer;transition:background .2s}
+    .btn:hover{background:#1748c2}
+
+    footer{text-align:center;padding:22px;font-size:.76rem;color:var(--muted)}
+    .note{font-size:.72rem;color:var(--muted);margin-top:10px;padding:8px 10px;background:var(--bg);border-radius:7px;border-left:3px solid var(--border)}
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="ico">📦</div>
+  <div>
+    <h1>Análisis de Cargas – Estibas</h1>
+    <p>Cálculo de ECT, BCT y Resistencia a la Compresión para Corrugado · Fórmulas verificadas con el libro Excel original</p>
+  </div>
+</header>
+
+<main>
+
+<!-- 1. DIMENSIONES INTERNAS -->
+<div class="card sec-blue">
+  <div class="ch"><div class="dot"></div>📐 Dimensiones Internas del Corrugado</div>
+  <div class="cb">
+    <div class="fg">
+      <div class="field">
+        <label>Largo interno – L (mm)</label>
+        <input type="number" id="lint_l" value="172" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>Ancho interno – A (mm)</label>
+        <input type="number" id="lint_a" value="146" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>Alto interno – H (mm)</label>
+        <input type="number" id="lint_h" value="98" oninput="calc()">
+      </div>
+    </div>
+    <div class="note">Dimensiones externas = (dim. interna + 8 mm) / 10 para Largo y Ancho; (+ 16 mm) / 10 para Alto — según fórmula del libro Excel.</div>
+    <table class="rt" style="margin-top:14px">
+      <tr><td>Largo externo (L)</td>   <td id="r_lext">—</td></tr>
+      <tr><td>Ancho externo (A)</td>   <td id="r_aext">—</td></tr>
+      <tr><td>Alto externo (H)</td>    <td id="r_hext">—</td></tr>
+      <tr><td>Perímetro P = 2(L+A)</td><td id="r_perim">—</td></tr>
+      <tr class="hi"><td>Perímetro (in)</td><td id="r_perim_in">—</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 2. TIPO DE CORRUGADO Y TARIMA -->
+<div class="card sec-gray">
+  <div class="ch"><div class="dot"></div>⚙️ Tipo de Corrugado y Tarima</div>
+  <div class="cb">
+    <div class="fg">
+      <div class="field">
+        <label>Tipo de Flauta</label>
+        <select id="flauta" onchange="calc()">
+          <option value="C" selected>C</option>
+          <option value="B">B</option>
+          <option value="E">E</option>
+          <option value="BC">BC (Doble)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Grosor – G (mm)</label>
+        <input type="number" id="grosor_mm" value="4" step="0.5" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>ECT (lb/in²)</label>
+        <input type="number" id="ect" value="29" step="0.5" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>Tipo de Tarima</label>
+        <input type="text" id="tipo_tarima" value="HD0541 Chep">
+      </div>
+      <div class="field">
+        <label>Peso Tarima (g)</label>
+        <input type="number" id="peso_tarima_g" value="25000" oninput="calc()">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. DATOS DEL PRODUCTO -->
+<div class="card sec-blue full">
+  <div class="ch"><div class="dot"></div>📋 Datos del Producto y Configuración del Pallet</div>
+  <div class="cb">
+    <div class="fg">
+      <div class="field">
+        <label>Peso Neto PT (g/pieza)</label>
+        <input type="number" id="p_neto_pt" value="115" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>Peso Bruto PT (g/pieza)</label>
+        <input type="number" id="p_bruto_pt" value="160" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>Peso Corrugado vacío (g/caja)</label>
+        <input type="number" id="p_corrugado" value="120" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>Piezas por Corrugado</label>
+        <input type="number" id="piezas_caja" value="12" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>Cajas por Cama</label>
+        <input type="number" id="cajas_cama" value="30" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>Camas por Pallet</label>
+        <input type="number" id="camas_pallet" value="7" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>Peso Hoja (g)</label>
+        <input type="number" id="p_hoja" value="0" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>No. de Hojas</label>
+        <input type="number" id="n_hojas" value="0" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>Peso Esquinero (g)</label>
+        <input type="number" id="p_esquinero" value="0" oninput="calc()">
+      </div>
+      <div class="field">
+        <label>No. de Esquineros</label>
+        <input type="number" id="n_esquineros" value="0" oninput="calc()">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. PESOS CALCULADOS -->
+<div class="card sec-green">
+  <div class="ch"><div class="dot"></div>⚖️ Pesos Calculados</div>
+  <div class="cb">
+    <table class="rt">
+      <tr><td>Peso neto por caja = piezas × P.Neto.PT</td>       <td id="r_pneto_caja">—</td></tr>
+      <tr><td>Peso bruto por caja = piezas × P.Bruto.PT + corrugado</td><td id="r_pbruto_caja">—</td></tr>
+      <tr><td>Peso corrugado vacío</td>                           <td id="r_pcorr">—</td></tr>
+      <tr><td>Cajas totales = camas × cajas/cama</td>            <td id="r_cajastot">—</td></tr>
+      <tr><td>Piezas por cama</td>                               <td id="r_pzxcama">—</td></tr>
+      <tr><td>Piezas totales por pallet</td>                     <td id="r_pztot">—</td></tr>
+      <tr><td>Peso total de hojas</td>                           <td id="r_phojas">—</td></tr>
+      <tr><td>Peso total de esquineros</td>                      <td id="r_pesq">—</td></tr>
+      <tr class="hi"><td><b>Peso Neto Tarima (solo producto)</b></td><td id="r_pneto_tar">—</td></tr>
+      <tr class="hi"><td><b>Peso Bruto Tarima (con tarima+accesorios)</b></td><td id="r_pbruto_tar">—</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- 5. COMPRESIÓN COLUMNA -->
+<div class="card sec-yel">
+  <div class="ch"><div class="dot"></div>🏗️ Compresión Columna</div>
+  <div class="cb">
+    <div class="fml">
+      Compresión = (Camas − 1) × Peso Bruto Caja<br>
+      = (<span id="f_camas">7</span> − 1) × <span id="f_pbruto">—</span> g<br>
+      = <span class="res" id="f_comp_kg">—</span> kg
+    </div>
+    <div class="bigs">
+      <div class="bcard bc-y">
+        <div class="bl">Compresión Columna</div>
+        <div class="bv" id="b_comp_kg">—</div>
+        <div class="bu">kg</div>
+      </div>
+      <div class="bcard bc-y">
+        <div class="bl">Compresión Columna</div>
+        <div class="bv" id="b_comp_lb">—</div>
+        <div class="bu">lb</div>
+      </div>
+    </div>
+    <div class="note" style="margin-top:14px">Carga que soporta la caja de la cama inferior (sin su propio peso). Fórmula: C28=(C12−1)×C10.</div>
+  </div>
+</div>
+
+<!-- 6. ECT TEÓRICO KELLICUTT -->
+<div class="card sec-yel full">
+  <div class="ch"><div class="dot"></div>🧮 Cálculo de la Resistencia a la Compresión (dimensiones externas en cm)</div>
+  <div class="cb">
+    <div class="fml">
+      C [kg] = 3.576 × (L + A) + 2.45 × H − 9.01<br>
+      C = 3.576 × (<span id="f_la">—</span>) + 2.45 × (<span id="f_h">—</span>) − 9.01<br>
+      C = <span class="res" id="f_c_kg">—</span> kg  =  <span class="res" id="f_c_lb">—</span> lb<br><br>
+      ECT Teórico = C / (5.874 × √(G_cm × P_cm))<br>
+      = <span id="f_c2">—</span> / (5.874 × √(<span id="f_gp">—</span>))<br>
+      = <span class="res" id="f_ect_t">—</span>
+    </div>
+    <div class="bigs">
+      <div class="bcard bc-y">
+        <div class="bl">ECT Teórico</div>
+        <div class="bv" id="b_ect_kel">—</div>
+        <div class="bu">(unidades McKee)</div>
+      </div>
+      <div class="bcard bc-y">
+        <div class="bl">C</div>
+        <div class="bv" id="b_kel_kg">—</div>
+        <div class="bu">kg</div>
+      </div>
+      <div class="bcard bc-y">
+        <div class="bl">C</div>
+        <div class="bv" id="b_kel_lb">—</div>
+        <div class="bu">lb</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 7. BCT McKEE -->
+<div class="card sec-green full">
+  <div class="ch"><div class="dot"></div>🔬 BCT Teórico – Fórmula de McKee (unidades pulgadas)</div>
+  <div class="cb">
+    <div class="fml">
+      BCT [lb] = 5.874 × ECT(lb/in²) × √(G_in × P_in)<br>
+      = 5.874 × <span id="f_ect">—</span> × √(<span id="f_gin">—</span> × <span id="f_pin">—</span>)<br>
+      = 5.874 × <span class="hi" id="f_ect2">—</span> × <span class="hi" id="f_sq">—</span><br>
+      = <span class="res" id="f_bct_lb">—</span> lb  =  <span class="res" id="f_bct_kg">—</span> kg
+    </div>
+    <div class="bigs">
+      <div class="bcard bc-g">
+        <div class="bl">BCT Teórico</div>
+        <div class="bv" id="b_bct_lb">—</div>
+        <div class="bu">lb</div>
+      </div>
+      <div class="bcard bc-g">
+        <div class="bl">BCT Teórico</div>
+        <div class="bv" id="b_bct_kg">—</div>
+        <div class="bu">kg</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 8. FACTORES DE REDUCCIÓN -->
+<div class="card sec-yel full">
+  <div class="ch"><div class="dot"></div>⚙️ Factores que Influyen en la Resistencia del Corrugado</div>
+  <div class="cb">
+    <table class="ft">
+      <thead>
+        <tr>
+          <th style="width:28%">Factor</th>
+          <th style="width:32%">Valor / Selección</th>
+          <th style="width:18%">Factor M</th>
+          <th style="width:22%">Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Humedad<span class="sub">% de humedad relativa</span></td>
+          <td><input type="number" id="f_hum_pct" value="6" min="0" max="100" step="1" oninput="calc()"></td>
+          <td id="fm_hum"><b>—</b></td>
+          <td><span class="badge bg-n" id="fb_hum">—</span></td>
+        </tr>
+        <tr>
+          <td>Pre-corte<span class="sub">¿Tiene ranuras de pre-corte?</span></td>
+          <td>
+            <select id="f_precorte" onchange="calc()">
+              <option value="1">No (1.00)</option>
+              <option value="0.3">Sí (0.30)</option>
+              <option value="0.4">Sí (0.40)</option>
+              <option value="0.5">Sí (0.50)</option>
+            </select>
+          </td>
+          <td id="fm_pre"><b>—</b></td>
+          <td><span class="badge bg-n" id="fb_pre">—</span></td>
+        </tr>
+        <tr>
+          <td>Arreglo<span class="sub">Tipo de apilamiento en pallet</span></td>
+          <td>
+            <select id="f_arreglo" onchange="calc()">
+              <option value="1">Columnar (1.00)</option>
+              <option value="0.5">Intercalado (0.50)</option>
+            </select>
+          </td>
+          <td id="fm_arr"><b>—</b></td>
+          <td><span class="badge bg-n" id="fb_arr">—</span></td>
+        </tr>
+        <tr>
+          <td>Impresión<span class="sub">Nivel de impresión en el corrugado</span></td>
+          <td>
+            <select id="f_impresion" onchange="calc()">
+              <option value="1.00">No (1.00)</option>
+              <option value="0.95">Ligera (0.95)</option>
+              <option value="0.90">Media (0.90)</option>
+              <option value="0.80">Fuerte (0.80)</option>
+            </select>
+          </td>
+          <td id="fm_imp"><b>—</b></td>
+          <td><span class="badge bg-n" id="fb_imp">—</span></td>
+        </tr>
+        <tr>
+          <td>Efecto del Tiempo<span class="sub">Duración del almacenamiento</span></td>
+          <td>
+            <select id="f_tiempo" onchange="calc()">
+              <option value="1.00">Corto plazo / días (1.00)</option>
+              <option value="0.90">Semanas (0.90)</option>
+              <option value="0.80">Meses (0.80)</option>
+              <option value="0.70">Largo plazo / años (0.70)</option>
+            </select>
+          </td>
+          <td id="fm_tie"><b>—</b></td>
+          <td><span class="badge bg-n" id="fb_tie">—</span></td>
+        </tr>
+        <tr>
+          <td>Inserto / Separador<span class="sub">¿Usa inserto interior?</span></td>
+          <td>
+            <select id="f_inserto" onchange="calc()">
+              <option value="0">No</option>
+              <option value="0.10">Leve +10%</option>
+              <option value="0.20">Moderado +20%</option>
+              <option value="0.30">Fuerte +30%</option>
+            </select>
+          </td>
+          <td id="fm_ins"><b>—</b></td>
+          <td><span class="badge bg-n" id="fb_ins">—</span></td>
+        </tr>
+        <tr style="background:#f0f7ff">
+          <td><b>Factor Combinado Total</b></td>
+          <td></td>
+          <td><b id="fm_tot">—</b></td>
+          <td><span class="badge bg-n" id="fb_tot">—</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 9. REDUCCIÓN ACUMULADA -->
+<div class="card sec-gray full">
+  <div class="ch"><div class="dot"></div>📉 Reducción de Resistencia Acumulada por Factor</div>
+  <div class="cb" style="overflow-x:auto">
+    <table class="rt" style="min-width:580px">
+      <thead>
+        <tr style="background:var(--bg)">
+          <td style="color:var(--muted);font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.4px">Factor aplicado</td>
+          <td style="color:var(--muted);font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.4px;text-align:right">Compresión Columna (kg)</td>
+          <td style="color:var(--muted);font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.4px;text-align:right">BCT McKee (kg)</td>
+          <td style="color:var(--muted);font-weight:700;font-size:.72rem;text-transform:uppercase;letter-spacing:.4px;text-align:right">BCT McKee (lb)</td>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="hi"><td>Sin reducción (teórico)</td>   <td id="acum_comp0">—</td><td id="acum_bct0">—</td><td id="acum_bct0lb">—</td></tr>
+        <tr><td>Después de Humedad</td>                   <td id="acum_comp1">—</td><td id="acum_bct1">—</td><td id="acum_bct1lb">—</td></tr>
+        <tr><td>Después de Pre-corte</td>                 <td id="acum_comp2">—</td><td id="acum_bct2">—</td><td id="acum_bct2lb">—</td></tr>
+        <tr><td>Después de Arreglo</td>                   <td id="acum_comp3">—</td><td id="acum_bct3">—</td><td id="acum_bct3lb">—</td></tr>
+        <tr><td>Después de Impresión</td>                 <td id="acum_comp4">—</td><td id="acum_bct4">—</td><td id="acum_bct4lb">—</td></tr>
+        <tr><td>Después de Tiempo</td>                    <td id="acum_comp5">—</td><td id="acum_bct5">—</td><td id="acum_bct5lb">—</td></tr>
+        <tr class="hi"><td><b>Con Inserto (valor final)</b></td><td id="acum_comp6">—</td><td id="acum_bct6">—</td><td id="acum_bct6lb">—</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 10. RESULTADOS FINALES -->
+<div class="card sec-blue full">
+  <div class="ch"><div class="dot"></div>🏆 Resultados Finales – ECT con Factor de Seguridad</div>
+  <div class="cb">
+    <div class="fml" style="margin-bottom:16px">
+      Factor de Seguridad = 1 / (M_hum × M_pre × M_arr × M_imp × M_tie)<br>
+      FS = 1 / (<span id="rf_ftot">—</span>) = <span class="res" id="rf_fs">—</span><br><br>
+      BCT con FS = Compresión × FS<br>
+      BCT_FS = <span id="rf_comp">—</span> × <span id="rf_fs2">—</span> = <span class="res" id="rf_bct_fs">—</span> kg<br><br>
+      ECT calculado = Compresión / (5.874 × √(G_cm × P_cm))<br>
+      = <span id="rf_ec1">—</span> / <span id="rf_ec2">—</span> = <span class="res" id="rf_ect_calc">—</span><br><br>
+      ECT con FS = ROUNDUP( (BCT_FS / (5.874 × √(G_cm × P_cm))) × 5.588 )<br>
+      = <span class="res" id="rf_ect_fs">—</span>  →  ECT Comercial = <span class="res" id="rf_ect_com">—</span> lb/in²
+    </div>
+
+    <div class="bigs" style="margin-bottom:20px">
+      <div class="bcard bc-p">
+        <div class="bl">Compresión Columna</div>
+        <div class="bv" id="B_comp">—</div>
+        <div class="bu">kg</div>
+      </div>
+      <div class="bcard bc-p">
+        <div class="bl">Factor de Seguridad</div>
+        <div class="bv" id="B_fs">—</div>
+        <div class="bu">adimensional</div>
+      </div>
+      <div class="bcard bc-g">
+        <div class="bl">BCT con FS (kg)</div>
+        <div class="bv" id="B_bct_fs_kg">—</div>
+        <div class="bu">kg</div>
+      </div>
+      <div class="bcard bc-g">
+        <div class="bl">BCT con FS (lb)</div>
+        <div class="bv" id="B_bct_fs_lb">—</div>
+        <div class="bu">lb/in²</div>
+      </div>
+      <div class="bcard bc-y">
+        <div class="bl">ECT Calculado</div>
+        <div class="bv" id="B_ect_calc">—</div>
+        <div class="bu">unidades McKee</div>
+      </div>
+      <div class="bcard bc-y">
+        <div class="bl">ECT con FS</div>
+        <div class="bv" id="B_ect_fs">—</div>
+        <div class="bu">redondeado</div>
+      </div>
+      <div class="bcard bc-p">
+        <div class="bl">ECT Comercial</div>
+        <div class="bv" id="B_ect_com">—</div>
+        <div class="bu">lb/in²</div>
+      </div>
+      <div class="bcard bc-g">
+        <div class="bl">BCT Inserto</div>
+        <div class="bv" id="B_ins_kg">—</div>
+        <div class="bu">kg</div>
+      </div>
+      <div class="bcard bc-g">
+        <div class="bl">BCT Total</div>
+        <div class="bv" id="B_tot_kg">—</div>
+        <div class="bu">kg</div>
+      </div>
+      <div class="bcard bc-g">
+        <div class="bl">BCT Total</div>
+        <div class="bv" id="B_tot_lb">—</div>
+        <div class="bu">lb/in²</div>
+      </div>
+    </div>
+
+    <h3 style="font-size:.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Capacidad vs. Carga Real</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:.83rem;margin-bottom:4px">
+          <span>BCT Teórico vs Compresión</span><span id="pct0">—</span>
+        </div>
+        <div class="bar-wrap"><div class="bar-fill" id="bar0" style="width:0%"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:.71rem;color:var(--muted);margin-top:3px">
+          <span>0 kg</span><span id="bar0_lab">—</span>
+        </div>
+      </div>
+      <div>
+        <div style="display:flex;justify-content:space-between;font-size:.83rem;margin-bottom:4px">
+          <span>BCT con FS vs Compresión</span><span id="pct1">—</span>
+        </div>
+        <div class="bar-wrap"><div class="bar-fill" id="bar1" style="width:0%"></div></div>
+        <div style="display:flex;justify-content:space-between;font-size:.71rem;color:var(--muted);margin-top:3px">
+          <span>0 kg</span><span id="bar1_lab">—</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="alert_box" class="alert alert-g">
+      <span style="font-size:1.1rem">✅</span>
+      <div id="alert_txt">—</div>
+    </div>
+  </div>
+</div>
+
+<div class="full" style="text-align:center;padding:4px 0 8px">
+  <button class="btn" onclick="calc()">🔄 Recalcular todo</button>
+</div>
+
+</main>
+<footer>Análisis de Cargas – Estibas · Basado en <em>ANalisis de cargas.xlsx</em> · Fórmulas verificadas directamente del libro Excel</footer>
+
+<script>
+const CM_TO_IN = 1 / 2.54;
+const LB_TO_KG = 0.45359290943563974;
+const KG_TO_LB = 1 / LB_TO_KG;
+
+const $ = id => document.getElementById(id);
+const v = id => parseFloat($(id).value) || 0;
+const s = id => $(id).value;
+const set = (id, x) => { const el = $(id); if (el) el.textContent = x; };
+const fmt = (n, d = 2) => isFinite(n) ? n.toFixed(d) : '—';
+
+// Factor de humedad lineal calibrado: 0%->1.00, 6%->0.66
+function fHumedad(pct) {
+  if (pct <= 0) return 1.00;
+  const slope = (1.00 - 0.66) / 6;
+  return Math.max(0.10, 1.00 - slope * pct);
+}
+
+function calc() {
+  /* 1. Dimensiones internas -> externas (fórmulas H5,H6,H7 del Excel) */
+  const Li = v('lint_l'), Ai = v('lint_a'), Hi = v('lint_h');
+  const G_mm = v('grosor_mm');
+  const L = (Li + 8) / 10;
+  const A = (Ai + 8) / 10;
+  const H = (Hi + 16) / 10;
+  const G = G_mm / 10;
+  const P = 2 * (L + A);
+  const L_in = L * CM_TO_IN, A_in = A * CM_TO_IN;
+  const H_in = H * CM_TO_IN, G_in = G * CM_TO_IN, P_in = P * CM_TO_IN;
+
+  set('r_lext', fmt(L, 2) + ' cm / ' + fmt(L_in, 3) + ' in');
+  set('r_aext', fmt(A, 2) + ' cm / ' + fmt(A_in, 3) + ' in');
+  set('r_hext', fmt(H, 2) + ' cm / ' + fmt(H_in, 3) + ' in');
+  set('r_perim', fmt(P, 2) + ' cm');
+  set('r_perim_in', fmt(P_in, 2) + ' in');
+
+  /* 2. Pesos (fórmulas C9, C10, C13, C22, C23, C25, C26 del Excel) */
+  const pNeto_pt = v('p_neto_pt');
+  const pBruto_pt = v('p_bruto_pt');
+  const pCorr = v('p_corrugado');
+  const pzCaja = v('piezas_caja');
+  const cajasCama = v('cajas_cama');
+  const camasPal = v('camas_pallet');
+  const pHojaG = v('p_hoja');
+  const nHojas = v('n_hojas');
+  const pEsqG = v('p_esquinero');
+  const nEsq = v('n_esquineros');
+  const pTarimaG = v('peso_tarima_g');
+
+  const pNeto_caja = pzCaja * pNeto_pt;
+  const pBruto_caja = pzCaja * pBruto_pt + pCorr;
+  const cajasTot = camasPal * cajasCama;
+  const pzCama = cajasCama * pzCaja;
+  const pzTot = pzCaja * cajasTot;
+  const pHojasTot = nHojas * pHojaG;
+  const pEsqTot = nEsq * pEsqG;
+  const pNetoTar = cajasTot * pNeto_caja;
+  const pBrutoTar = cajasTot * pBruto_caja + pTarimaG + pEsqTot + pHojasTot;
+
+  set('r_pneto_caja', fmt(pNeto_caja / 1000, 3) + ' kg (' + fmt(pNeto_caja, 0) + ' g)');
+  set('r_pbruto_caja', fmt(pBruto_caja / 1000, 3) + ' kg (' + fmt(pBruto_caja, 0) + ' g)');
+  set('r_pcorr', fmt(pCorr / 1000, 3) + ' kg (' + fmt(pCorr, 0) + ' g)');
+  set('r_cajastot', cajasTot.toLocaleString());
+  set('r_pzxcama', pzCama.toLocaleString());
+  set('r_pztot', pzTot.toLocaleString());
+  set('r_phojas', fmt(pHojasTot / 1000, 3) + ' kg');
+  set('r_pesq', fmt(pEsqTot / 1000, 3) + ' kg');
+  set('r_pneto_tar', fmt(pNetoTar / 1000, 2) + ' kg (' + fmt(pNetoTar, 0) + ' g)');
+  set('r_pbruto_tar', fmt(pBrutoTar / 1000, 2) + ' kg (' + fmt(pBrutoTar, 0) + ' g)');
+
+  /* 3. Compresión columna: C28 = (C12-1) * C10 */
+  const compG = (camasPal - 1) * pBruto_caja;
+  const compKg = compG / 1000;
+  const compLb = compKg * KG_TO_LB;
+
+  set('f_camas', camasPal);
+  set('f_pbruto', fmt(pBruto_caja, 0));
+  set('f_comp_kg', fmt(compKg, 4));
+  set('b_comp_kg', fmt(compKg, 2));
+  set('b_comp_lb', fmt(compLb, 2));
+
+  /* 4. Kellicutt: N7 = 3.576*(H5+H6) + 2.45*H7 - 9.01; N6 = N7/(5.874*SQRT(H11*H8)) */
+  const kel_kg = 3.576 * (L + A) + 2.45 * H - 9.01;
+  const kel_lb = kel_kg * KG_TO_LB;
+  const mckee_denom_cm = 5.874 * Math.sqrt(G * P);
+  const ect_teorico = kel_kg / mckee_denom_cm;
+
+  set('f_la', fmt(L + A, 2));
+  set('f_h', fmt(H, 2));
+  set('f_c_kg', fmt(kel_kg, 2));
+  set('f_c_lb', fmt(kel_lb, 2));
+  set('f_c2', fmt(kel_kg, 2));
+  set('f_gp', fmt(G * P, 4));
+  set('f_ect_t', fmt(ect_teorico, 4));
+  set('b_ect_kel', fmt(ect_teorico, 4));
+  set('b_kel_kg', fmt(kel_kg, 2));
+  set('b_kel_lb', fmt(kel_lb, 2));
+
+  /* 5. BCT McKee: N15 = 5.874 * ECT * SQRT(I8*I11) */
+  const ECT = v('ect');
+  const sqrtGP = Math.sqrt(G_in * P_in);
+  const bct_lb = 5.874 * ECT * sqrtGP;
+  const bct_kg = bct_lb * LB_TO_KG;
+
+  set('f_ect', fmt(ECT, 1));
+  set('f_gin', fmt(G_in, 4));
+  set('f_pin', fmt(P_in, 3));
+  set('f_ect2', fmt(ECT, 1));
+  set('f_sq', fmt(sqrtGP, 4));
+  set('f_bct_lb', fmt(bct_lb, 2));
+  set('f_bct_kg', fmt(bct_kg, 2));
+  set('b_bct_lb', fmt(bct_lb, 2));
+  set('b_bct_kg', fmt(bct_kg, 2));
+
+  /* 6. Factores */
+  const humPct = v('f_hum_pct');
+  const M22 = fHumedad(humPct);
+  const M23 = parseFloat(s('f_precorte'));
+  const M24 = parseFloat(s('f_arreglo'));
+  const M25 = parseFloat(s('f_impresion'));
+  const M26 = parseFloat(s('f_tiempo'));
+  const M27 = parseFloat(s('f_inserto'));
+
+  const fTotal = M22 * M23 * M24 * M25 * M26;
+  const FS = 1 / fTotal;
+
+  const badge = (id, txt, cls) => { const el = $(id); el.textContent = txt; el.className = 'badge ' + cls; };
+  set('fm_hum', fmt(M22, 4));
+  set('fm_pre', fmt(M23, 2));
+  set('fm_arr', fmt(M24, 2));
+  set('fm_imp', fmt(M25, 2));
+  set('fm_tie', fmt(M26, 2));
+  set('fm_ins', M27 === 0 ? '— (sin inserto)' : '+' + fmt(M27 * 100, 0) + '%');
+  set('fm_tot', fmt(fTotal, 4));
+
+  badge('fb_hum', humPct + '% → ' + fmt(M22, 2), M22 < 0.70 ? 'bg-y' : 'bg-g');
+  badge('fb_pre', M23 === 1 ? 'Sin pre-corte' : 'Reduce BCT −' + fmt((1 - M23) * 100, 0) + '%', M23 < 1 ? 'bg-y' : 'bg-g');
+  badge('fb_arr', M24 === 1 ? 'Columnar' : 'Intercalado', M24 < 1 ? 'bg-y' : 'bg-g');
+  badge('fb_imp', M25 >= 1 ? 'Sin impresión' : 'Con impresión', M25 < 1 ? 'bg-y' : 'bg-g');
+  badge('fb_tie', M26 >= 1 ? 'Corto plazo' : 'Largo plazo', M26 < 1 ? 'bg-y' : 'bg-g');
+  badge('fb_ins', M27 === 0 ? 'Sin inserto' : 'Con inserto +' + fmt(M27 * 100, 0) + '%', M27 > 0 ? 'bg-g' : 'bg-n');
+  badge('fb_tot', fmt(fTotal, 4), fTotal < 0.50 ? 'bg-r' : fTotal < 0.75 ? 'bg-y' : 'bg-g');
+
+  /* 7. Reducción acumulada
+     Compresión: Q22=compKg*M22; Q23=Q22*M23; Q24=Q23*M24; Q25=Q24*M25; Q26=Q25*M26; Q27=IF(NO,Q26,Q26*(1+M27))
+     BCT: R22=bct_kg*M22; R23=IF(M23=1,R22,R22*(1-M23)); R24=IF(M24=1,R23,R23*(1-M24)); R25=R24*M25; R26=R25*M26; R27=IF(NO,R26,R26*(1+M27))
+  */
+  const Q = [compKg, 0, 0, 0, 0, 0, 0];
+  Q[1] = Q[0] * M22;
+  Q[2] = Q[1] * M23;
+  Q[3] = Q[2] * M24;
+  Q[4] = Q[3] * M25;
+  Q[5] = Q[4] * M26;
+  Q[6] = M27 === 0 ? Q[5] : Q[5] * (1 + M27);
+
+  const R = [bct_kg, 0, 0, 0, 0, 0, 0];
+  R[1] = R[0] * M22;
+  R[2] = M23 === 1 ? R[1] : R[1] * (1 - M23);
+  R[3] = M24 === 1 ? R[2] : R[2] * (1 - M24);
+  R[4] = R[3] * M25;
+  R[5] = R[4] * M26;
+  R[6] = M27 === 0 ? R[5] : R[5] * (1 + M27);
+
+  for (let i = 0; i <= 6; i++) {
+    set('acum_comp' + i, fmt(Q[i], 4) + ' kg');
+    set('acum_bct' + i, fmt(R[i], 4) + ' kg');
+    set('acum_bct' + i + 'lb', fmt(R[i] * KG_TO_LB, 2) + ' lb');
+  }
+
+  /* 8. Resultados finales (fórmulas C33-C44 del Excel) */
+  // C33 = C32/(5.874*SQRT(H11*H8))
+  const ect_calc = compKg / mckee_denom_cm;
+  // C35 = C34 * C32
+  const bct_fs_kg = FS * compKg;
+  const bct_fs_lb = bct_fs_kg * KG_TO_LB;
+  // C43 = ROUNDUP( (C35/(5.874*SQRT(H11*H8)))*5.588, 0)
+  const ect_fs_raw = (bct_fs_kg / mckee_denom_cm) * 5.588;
+  const ect_fs = Math.ceil(ect_fs_raw);
+  // C44 = IF(C43<23, 23, ...)
+  const ect_com = ect_fs < 23 ? 23 : ect_fs;
+  // C39=C35*M27, C41=C39+C35
+  const bct_ins_kg = bct_fs_kg * M27;
+  const bct_tot_kg = bct_ins_kg + bct_fs_kg;
+  const bct_tot_lb = bct_tot_kg * KG_TO_LB;
+
+  set('rf_ftot', fmt(fTotal, 4));
+  set('rf_fs', fmt(FS, 4));
+  set('rf_comp', fmt(compKg, 4));
+  set('rf_fs2', fmt(FS, 4));
+  set('rf_bct_fs', fmt(bct_fs_kg, 4));
+  set('rf_ec1', fmt(compKg, 4));
+  set('rf_ec2', fmt(mckee_denom_cm, 4));
+  set('rf_ect_calc', fmt(ect_calc, 4));
+  set('rf_ect_fs', ect_fs);
+  set('rf_ect_com', ect_com + ' lb/in²');
+
+  set('B_comp', fmt(compKg, 4));
+  set('B_fs', fmt(FS, 4));
+  set('B_bct_fs_kg', fmt(bct_fs_kg, 4));
+  set('B_bct_fs_lb', fmt(bct_fs_lb, 4));
+  set('B_ect_calc', fmt(ect_calc, 4));
+  set('B_ect_fs', ect_fs);
+  set('B_ect_com', ect_com);
+  set('B_ins_kg', fmt(bct_ins_kg, 4));
+  set('B_tot_kg', fmt(bct_tot_kg, 4));
+  set('B_tot_lb', fmt(bct_tot_lb, 4));
+
+  /* 9. Barras y alerta */
+  const pct0 = Math.min((compKg / bct_kg) * 100, 130);
+  const pct1 = Math.min((compKg / bct_fs_kg) * 100, 130);
+  const barColor = p => p > 90 ? '#c81e1e' : p > 70 ? '#c27803' : '#057a55';
+
+  $('bar0').style.width = Math.min(pct0, 100) + '%';
+  $('bar0').style.background = barColor(pct0);
+  $('bar1').style.width = Math.min(pct1, 100) + '%';
+  $('bar1').style.background = barColor(pct1);
+  set('pct0', fmt(pct0, 1) + '%');
+  set('pct1', fmt(pct1, 1) + '%');
+  set('bar0_lab', fmt(compKg, 2) + ' kg / ' + fmt(bct_kg, 2) + ' kg BCT teórico');
+  set('bar1_lab', fmt(compKg, 2) + ' kg / ' + fmt(bct_fs_kg, 2) + ' kg BCT_FS');
+
+  const alertEl = $('alert_box'), alertTxt = $('alert_txt');
+  if (FS >= 2.0) {
+    alertEl.className = 'alert alert-g';
+    alertTxt.innerHTML = `<b>✅ Condición segura (FS ≥ 2.0).</b> El corrugado soporta con amplio margen la carga de ${fmt(compKg, 2)} kg/columna. Factor de seguridad: <b>${fmt(FS, 2)}</b>.`;
+  } else if (FS >= 1.3) {
+    alertEl.className = 'alert alert-y';
+    alertTxt.innerHTML = `<b>⚠️ Condición aceptable (1.3 ≤ FS < 2.0).</b> Revisar condiciones de almacenamiento. Compresión: ${fmt(compKg, 2)} kg | BCT_FS: ${fmt(bct_fs_kg, 2)} kg. FS: <b>${fmt(FS, 2)}</b>.`;
+  } else {
+    alertEl.className = 'alert alert-r';
+    alertTxt.innerHTML = `<b>🚨 RIESGO (FS < 1.3).</b> La resistencia reducida (${fmt(bct_fs_kg, 2)} kg) se acerca peligrosamente a la carga real (${fmt(compKg, 2)} kg). Se recomienda reducir camas, mejorar ECT o controlar humedad. FS: <b>${fmt(FS, 2)}</b>.`;
+  }
+}
+
+calc();
+</script>
+</body>
+</html>
