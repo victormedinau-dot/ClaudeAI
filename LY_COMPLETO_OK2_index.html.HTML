@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SAP Material Master Generator</title>
+<style>
+:root{--blue:#0a6ebd;--blue2:#085a9e;--green:#1a7a4a;--gbg:#e8f7ef;--red:#c0392b;--rbg:#fdecea;--amber:#d68910;--abg:#fef9ec;--bg:#f4f6f9;--card:#fff;--bdr:#dde3eb;--txt:#1a2035;--muted:#6b7a99;--r:10px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+header{background:linear-gradient(135deg,#0a6ebd,#1a3a6e);padding:20px 28px;display:flex;align-items:center;gap:14px;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+.hl{width:42px;height:42px;background:rgba(255,255,255,.15);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+header h1{color:#fff;font-size:1.18rem;font-weight:700;line-height:1.25}header p{color:rgba(255,255,255,.7);font-size:.78rem;margin-top:2px}
+main{max-width:960px;margin:0 auto;padding:26px 18px;display:flex;flex-direction:column;gap:20px}
+.card{background:var(--card);border-radius:var(--r);border:1px solid var(--bdr);box-shadow:0 1px 4px rgba(0,0,0,.06);overflow:hidden}
+.ch{padding:13px 20px;border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:10px;background:#fafbfc}
+.ci{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0}
+.ci.b{background:#e8f1fb}.ci.g{background:#e8f7ef}.ci.a{background:#fef3cd}.ci.p{background:#f3e8fb}
+.ch h2{font-size:.92rem;font-weight:600}.ch p{font-size:.76rem;color:var(--muted);margin-top:1px}
+.cb{padding:20px}
+.uploads{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.dz{border:2px dashed var(--bdr);border-radius:var(--r);padding:26px 14px;text-align:center;cursor:pointer;transition:all .2s;position:relative;min-height:140px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.dz:hover,.dz.ov{border-color:var(--blue);background:#f0f6ff}
+.dz.ok{border-color:var(--green);background:var(--gbg)}
+.dz input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.dz .di{font-size:1.8rem;margin-bottom:6px}.dz h3{font-size:.84rem;font-weight:600;margin-bottom:3px}.dz p{font-size:.73rem;color:var(--muted)}
+.badge{display:inline-flex;align-items:center;gap:5px;background:var(--gbg);color:var(--green);padding:4px 11px;border-radius:14px;font-size:.78rem;font-weight:600;margin-top:8px}
+.sb{padding:10px 16px;border-radius:var(--r);font-size:.82rem;font-weight:500;display:flex;align-items:center;gap:8px}
+.sb.i{background:#e8f1fb;color:var(--blue)}.sb.s{background:var(--gbg);color:var(--green)}.sb.e{background:var(--rbg);color:var(--red)}.sb.w{background:var(--abg);color:var(--amber)}
+.spin{width:15px;height:15px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:sp .7s linear infinite;flex-shrink:0}
+@keyframes sp{to{transform:rotate(360deg)}}
+.dg{display:grid;gap:10px}.ds h3{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:7px}
+.dt{width:100%;border-collapse:collapse;font-size:.8rem}
+.dt th{background:#f4f6f9;padding:6px 11px;text-align:left;font-weight:600;border-bottom:1px solid var(--bdr);white-space:nowrap;color:var(--muted);font-size:.74rem}
+.dt td{padding:6px 11px;border-bottom:1px solid #eef0f4;vertical-align:middle}.dt tr:last-child td{border-bottom:none}
+.vn{font-weight:600;color:var(--blue)}.vc{font-family:monospace;font-size:.78rem;background:#f4f6f9;padding:2px 5px;border-radius:3px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;margin-top:4px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:8px;font-size:.86rem;font-weight:600;border:none;cursor:pointer;transition:all .2s}
+.bp{background:var(--blue);color:#fff}.bp:hover{background:var(--blue2);transform:translateY(-1px);box-shadow:0 4px 12px rgba(10,110,189,.3)}
+.bg{background:var(--green);color:#fff}.bg:hover{background:#155e39;transform:translateY(-1px);box-shadow:0 4px 12px rgba(26,122,74,.3)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+.br{display:flex;gap:11px;flex-wrap:wrap;margin-top:16px}
+select{padding:6px 11px;border-radius:6px;border:1px solid var(--bdr);font-size:.83rem;background:#fff}
+.note{font-size:.78rem;color:var(--muted);background:#f8f9fb;border:1px solid var(--bdr);border-radius:8px;padding:10px 14px;margin-top:12px}
+.hidden{display:none!important}
+/* form campos adicionales */
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.fg{display:flex;flex-direction:column;gap:5px}
+.fg label{font-size:.8rem;font-weight:600;color:var(--txt)}
+.fg .sub{font-size:.72rem;color:var(--muted);margin-top:1px}
+.fg input,.fg select{padding:9px 12px;border:1px solid var(--bdr);border-radius:7px;font-size:.84rem;font-family:inherit;background:#fff;transition:border .15s}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(10,110,189,.1)}
+.fg input::placeholder{color:#bbc3d4}
+.req{color:var(--red);margin-left:2px}
+.opt-tag{font-size:.68rem;background:#f0f3f8;color:var(--muted);padding:1px 6px;border-radius:8px;font-weight:500;margin-left:4px}
+footer{text-align:center;padding:18px;font-size:.73rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<header>
+  <div class="hl">📊</div>
+  <div>
+    <h1>SAP Material Master Generator</h1>
+    <p>Inyecta los datos del FACT SHEET directamente en el template — conservando formato, colores y estructura original</p>
+  </div>
+</header>
+<main>
+
+<!-- PASO 1: SUBIR ARCHIVOS -->
+<div class="card" id="s1">
+  <div class="ch"><div class="ci b">📂</div><div><h2>Paso 1 — Cargar archivos</h2><p>Sube el FACT SHEET y el template LY PT COMPLETO original</p></div></div>
+  <div class="cb">
+    <div class="uploads">
+      <!-- FACT SHEET -->
+      <div>
+        <p style="font-size:.8rem;font-weight:700;margin-bottom:8px;color:var(--muted)">① FACT SHEET</p>
+        <div class="dz" id="dz1">
+          <input type="file" id="fi1" accept=".xlsx,.xlsm,.xls">
+          <div class="di">📊</div>
+          <h3>FACT SHEET</h3>
+          <p>.xlsm / .xlsx · Hoja: <strong>OK</strong></p>
+          <div id="b1" class="badge hidden">✅ <span id="fn1"></span></div>
+        </div>
+      </div>
+      <!-- TEMPLATE -->
+      <div>
+        <p style="font-size:.8rem;font-weight:700;margin-bottom:8px;color:var(--muted)">② TEMPLATE (LY PT COMPLETO)</p>
+        <div class="dz" id="dz2">
+          <input type="file" id="fi2" accept=".xlsx,.xlsm,.xls">
+          <div class="di">📋</div>
+          <h3>LY PT COMPLETO</h3>
+          <p>.xlsx · El template con el formato original</p>
+          <div id="b2" class="badge hidden">✅ <span id="fn2"></span></div>
+        </div>
+      </div>
+    </div>
+    <div id="ust" class="sb i hidden" style="margin-top:13px"><div class="spin"></div><span id="umsg"></span></div>
+    <div class="note">💡 El archivo generado conservará exactamente los colores, fuentes, bordes y anchos de columna del template original. Solo se reemplazan los valores de las celdas de datos.</div>
+  </div>
+</div>
+
+<!-- PASO 2: PREVIEW -->
+<div class="card hidden" id="s2">
+  <div class="ch"><div class="ci a">🔍</div><div><h2>Paso 2 — Datos extraídos del FACT SHEET</h2><p>Revisa que los valores sean correctos</p></div></div>
+  <div class="cb">
+    <div id="mpa" class="sb w hidden" style="margin-bottom:12px">⚠️ Múltiples productos detectados</div>
+    <div id="psr" class="hidden" style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:14px">
+      <label style="font-size:.84rem;font-weight:600">Producto:</label>
+      <select id="psel"></select>
+      <button class="btn bp" onclick="selProd()" style="padding:6px 15px;font-size:.8rem">Cargar</button>
+    </div>
+    <div id="prev"></div>
+  </div>
+</div>
+
+<!-- PASO 3: DATOS ADICIONALES -->
+<div class="card hidden" id="s3">
+  <div class="ch"><div class="ci p">✏️</div><div><h2>Paso 3 — Datos adicionales SAP</h2><p>Completa los campos requeridos antes de generar el archivo</p></div></div>
+  <div class="cb">
+    <div class="fgrid">
+
+      <div class="fg">
+        <label>Grupo de artículos <span class="req">*</span></label>
+        <div class="sub">MARA-MATKL · Ej: Z001, CONS, FARM</div>
+        <input type="text" id="f_matkl" placeholder="Ej: Z001" maxlength="9">
+      </div>
+
+      <div class="fg">
+        <label>Denominación estándar <span class="opt-tag">opcional</span></label>
+        <div class="sub">MARA-NORMT · Ej: DIN 55405, NOM-XXX</div>
+        <input type="text" id="f_normt" placeholder="Ej: NOM-XXX" maxlength="18">
+      </div>
+
+      <div class="fg">
+        <label>Clasificación fiscal del material <span class="req">*</span></label>
+        <div class="sub">MG03STEUER-TAXKM · Campo de VENTAS</div>
+        <input type="text" id="f_taxkm" placeholder="Ej: 1, 0, FULL" maxlength="2">
+      </div>
+
+      <div class="fg">
+        <label>Centro de beneficio <span class="opt-tag">opcional</span></label>
+        <div class="sub">MARC-PRCTR · Se aplica en Ventas Centro y Almacén</div>
+        <input type="text" id="f_prctr" placeholder="Ej: PC-MX01" maxlength="10">
+      </div>
+
+    </div>
+    <div id="fval" class="sb e hidden" style="margin-top:14px"><span id="fvalmsg"></span></div>
+    <div class="br">
+      <button class="btn bp" onclick="confirmExtra()">Continuar →</button>
+    </div>
+  </div>
+</div>
+
+<!-- PASO 4: GENERAR -->
+<div class="card hidden" id="s4">
+  <div class="ch"><div class="ci g">⚙️</div><div><h2>Paso 4 — Generar LY PT COMPLETO</h2><p>Se inyectarán los datos en el template preservando el formato original</p></div></div>
+  <div class="cb">
+    <div id="gst" class="sb hidden"><span id="gmsg"></span></div>
+    <div class="br">
+      <button class="btn bp" id="bgen" onclick="generate()">⚙️ Generar archivo SAP</button>
+      <button class="btn bg hidden" id="bdl" onclick="doDownload()">⬇️ Descargar LY PT COMPLETO xlsx</button>
+    </div>
+  </div>
+</div>
+
+</main>
+<footer>100% local · Sin conexión a internet · Los datos no salen de tu equipo</footer>
+
+<script>
+'use strict';
+/* ═══════════════════════════ CRC32 ═══════════════════════════ */
+const CT=new Uint32Array(256);
+for(let i=0;i<256;i++){let c=i;for(let j=0;j<8;j++)c=(c&1)?(0xEDB88320^(c>>>1)):(c>>>1);CT[i]=c>>>0;}
+function crc32(d){let c=0xFFFFFFFF;for(let i=0;i<d.length;i++)c=(CT[(c^d[i])&0xFF]^(c>>>8))>>>0;return(c^0xFFFFFFFF)>>>0;}
+
+/* ═══════════════════════════ ZIP WRITER (store) ═══════════════════════════ */
+class ZipW{
+  constructor(){this.files=[];this.off=0;}
+  add(name,data){
+    const d=typeof data==='string'?new TextEncoder().encode(data):data;
+    const nb=new TextEncoder().encode(name);
+    const c=crc32(d);
+    this.files.push({nb,d,c,off:this.off});
+    this.off+=30+nb.length+d.length;
+  }
+  build(){
+    let lsz=0;for(const f of this.files)lsz+=30+f.nb.length+f.d.length;
+    let csz=0;for(const f of this.files)csz+=46+f.nb.length;
+    const buf=new Uint8Array(lsz+csz+22),v=new DataView(buf.buffer);
+    let p=0;
+    for(const f of this.files){
+      v.setUint32(p,0x04034b50,true);p+=4;v.setUint16(p,20,true);p+=2;v.setUint16(p,0,true);p+=2;
+      v.setUint16(p,0,true);p+=2;v.setUint16(p,0,true);p+=2;v.setUint16(p,0,true);p+=2;
+      v.setUint32(p,f.c,true);p+=4;v.setUint32(p,f.d.length,true);p+=4;v.setUint32(p,f.d.length,true);p+=4;
+      v.setUint16(p,f.nb.length,true);p+=2;v.setUint16(p,0,true);p+=2;
+      buf.set(f.nb,p);p+=f.nb.length;buf.set(f.d,p);p+=f.d.length;
+    }
+    const cdO=p;
+    for(const f of this.files){
+      v.setUint32(p,0x02014b50,true);p+=4;v.setUint16(p,20,true);p+=2;v.setUint16(p,20,true);p+=2;
+      v.setUint16(p,0,true);p+=2;v.setUint16(p,0,true);p+=2;v.setUint16(p,0,true);p+=2;v.setUint16(p,0,true);p+=2;
+      v.setUint32(p,f.c,true);p+=4;v.setUint32(p,f.d.length,true);p+=4;v.setUint32(p,f.d.length,true);p+=4;
+      v.setUint16(p,f.nb.length,true);p+=2;v.setUint16(p,0,true);p+=2;v.setUint16(p,0,true);p+=2;
+      v.setUint16(p,0,true);p+=2;v.setUint16(p,0,true);p+=2;v.setUint32(p,0,true);p+=4;v.setUint32(p,f.off,true);p+=4;
+      buf.set(f.nb,p);p+=f.nb.length;
+    }
+    const cdSz=p-cdO;
+    v.setUint32(p,0x06054b50,true);p+=4;v.setUint16(p,0,true);p+=2;v.setUint16(p,0,true);p+=2;
+    v.setUint16(p,this.files.length,true);p+=2;v.setUint16(p,this.files.length,true);p+=2;
+    v.setUint32(p,cdSz,true);p+=4;v.setUint32(p,cdO,true);p+=4;v.setUint16(p,0,true);
+    return buf;
+  }
+}
+
+/* ═══════════════════════════ ZIP READER ═══════════════════════════ */
+async function inflate(data){
+  const ds=new DecompressionStream('deflate-raw');
+  const w=ds.writable.getWriter(),r=ds.readable.getReader();
+  w.write(data);w.close();
+  const ch=[];while(true){const{done,value}=await r.read();if(done)break;ch.push(value);}
+  const tot=ch.reduce((s,c)=>s+c.length,0),out=new Uint8Array(tot);
+  let o=0;for(const c of ch){out.set(c,o);o+=c.length;}return out;
+}
+class ZipR{
+  constructor(ab){this.b=new Uint8Array(ab);this.dv=new DataView(ab);this._e=null;}
+  _eocd(){
+    for(let i=this.b.length-22;i>=0;i--)
+      if(this.dv.getUint32(i,true)===0x06054b50)
+        return{off:this.dv.getUint32(i+16,true),n:this.dv.getUint16(i+10,true)};
+    throw new Error('No es un archivo ZIP válido');
+  }
+  entries(){
+    if(this._e)return this._e;
+    const{off,n}=this._eocd();
+    this._e={};let p=off;
+    for(let i=0;i<n;i++){
+      if(this.dv.getUint32(p,true)!==0x02014b50)break;
+      const comp=this.dv.getUint16(p+10,true),csz=this.dv.getUint32(p+20,true);
+      const usz=this.dv.getUint32(p+24,true),nl=this.dv.getUint16(p+28,true);
+      const el=this.dv.getUint16(p+30,true),cl=this.dv.getUint16(p+32,true);
+      const loff=this.dv.getUint32(p+42,true);
+      const name=new TextDecoder().decode(this.b.slice(p+46,p+46+nl));
+      this._e[name]={comp,csz,usz,loff};
+      p+=46+nl+el+cl;
+    }
+    return this._e;
+  }
+  async _raw(name){
+    const e=this.entries()[name];if(!e)return null;
+    const lp=e.loff;
+    if(this.dv.getUint32(lp,true)!==0x04034b50)throw new Error('Header ZIP inválido: '+name);
+    const nl=this.dv.getUint16(lp+26,true),xl=this.dv.getUint16(lp+28,true);
+    const comp=this.b.slice(lp+30+nl+xl,lp+30+nl+xl+e.csz);
+    return e.comp===0?comp:e.comp===8?await inflate(comp):null;
+  }
+  async text(name){const r=await this._raw(name);return r?new TextDecoder('utf-8').decode(r):null;}
+  async bytes(name){return this._raw(name);}
+}
+
+/* ═══════════════════════════ XLSX READER ═══════════════════════════ */
+class XLSXRd{
+  constructor(z){this.z=z;this._ss=null;this._sm=null;}
+  async ss(){
+    if(this._ss)return this._ss;
+    const x=await this.z.text('xl/sharedStrings.xml');
+    if(!x){this._ss=[];return[];}
+    const doc=new DOMParser().parseFromString(x,'application/xml');
+    this._ss=Array.from(doc.getElementsByTagName('si')).map(si=>
+      Array.from(si.getElementsByTagName('t')).map(t=>t.textContent).join(''));
+    return this._ss;
+  }
+  async sheetMap(){
+    if(this._sm)return this._sm;
+    const[wb,rx]=await Promise.all([this.z.text('xl/workbook.xml'),this.z.text('xl/_rels/workbook.xml.rels')]);
+    const rd=new DOMParser().parseFromString(rx,'application/xml');
+    const rid={};for(const r of rd.getElementsByTagName('Relationship'))rid[r.getAttribute('Id')]=r.getAttribute('Target');
+    const wd=new DOMParser().parseFromString(wb,'application/xml');
+    this._sm={};
+    for(const sh of wd.getElementsByTagName('sheet')){
+      const name=sh.getAttribute('name');
+      const id=sh.getAttribute('r:id')||sh.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id');
+      const t=rid[id]||'';
+      this._sm[name]=t.startsWith('/')?t.slice(1):('xl/'+t);
+    }
+    return this._sm;
+  }
+  async getSheet(name){
+    const sm=await this.sheetMap(),ss=await this.ss();
+    const path=sm[name];
+    if(!path)throw new Error('Hoja no encontrada: '+name+'. Disponibles: '+Object.keys(sm).join(', '));
+    const x=await this.z.text(path);
+    if(!x)throw new Error('No se pudo leer: '+path);
+    const doc=new DOMParser().parseFromString(x,'application/xml');
+    const res=[];
+    for(const row of doc.getElementsByTagName('row')){
+      const ri=parseInt(row.getAttribute('r'),10)-1;
+      while(res.length<=ri)res.push([]);
+      for(const c of row.getElementsByTagName('c')){
+        const ref=c.getAttribute('r')||'A1',t=c.getAttribute('t')||'n';
+        const ci=cIdx(ref.replace(/[0-9]/g,''));
+        while(res[ri].length<=ci)res[ri].push(null);
+        if(t==='e'){res[ri][ci]=null;continue;}
+        const ve=c.getElementsByTagName('v')[0];
+        if(!ve){res[ri][ci]=null;continue;}
+        const v=ve.textContent;
+        if(t==='s')res[ri][ci]=ss[parseInt(v,10)]??null;
+        else if(t==='b')res[ri][ci]=v==='1';
+        else if(t==='str'||t==='inlineStr')res[ri][ci]=v;
+        else{const n=parseFloat(v);res[ri][ci]=isNaN(n)?v:n;}
+      }
+    }
+    return res;
+  }
+}
+function cIdx(s){let n=0;for(const c of s)n=n*26+(c.charCodeAt(0)-64);return n-1;}
+function cName(n){let s='',x=n+1;while(x>0){x--;s=String.fromCharCode(65+(x%26))+s;x=Math.floor(x/26);}return s;}
+
+/* ═══════════════════════════ SHARED STRINGS MANAGER ═══════════════════════════ */
+class SS{
+  constructor(){this.arr=[];this.map=new Map();}
+  load(xml){
+    if(!xml)return;
+    const doc=new DOMParser().parseFromString(xml,'application/xml');
+    for(const si of doc.getElementsByTagName('si')){
+      const t=Array.from(si.getElementsByTagName('t')).map(e=>e.textContent).join('');
+      if(!this.map.has(t)){this.map.set(t,this.arr.length);this.arr.push(t);}
+    }
+  }
+  idx(s){
+    const k=String(s);
+    if(this.map.has(k))return this.map.get(k);
+    const i=this.arr.length;this.arr.push(k);this.map.set(k,i);return i;
+  }
+  toXml(){
+    const xe=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+      `<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="${this.arr.length}" uniqueCount="${this.arr.length}">` +
+      this.arr.map(s=>`<si><t xml:space="preserve">${xe(s)}</t></si>`).join('')+'</sst>';
+  }
+}
+
+/* ═══════════════════════════ WORKSHEET CELL INJECTOR ═══════════════════════════ */
+// cellMap: { rowNum: { colNum: value } }  (both 1-based)
+function injectCells(xmlStr, cellMap, ss){
+  const NS='http://schemas.openxmlformats.org/spreadsheetml/2006/main';
+  const doc=new DOMParser().parseFromString(xmlStr,'application/xml');
+  if(doc.documentElement.tagName==='parsererror')return xmlStr;
+
+  // Index rows by their r attribute
+  const rowMap={};
+  for(const r of doc.getElementsByTagName('row'))rowMap[r.getAttribute('r')]=r;
+
+  for(const[rowNum,cols] of Object.entries(cellMap)){
+    const rowEl=rowMap[String(rowNum)];
+    if(!rowEl)continue;
+
+    // Index cells in this row
+    const cellIdx={};
+    for(const c of rowEl.getElementsByTagName('c'))cellIdx[c.getAttribute('r')]=c;
+
+    for(const[colNum,value] of Object.entries(cols)){
+      const ref=cName(parseInt(colNum)-1)+rowNum;
+      let cel=cellIdx[ref];
+
+      if(!cel){
+        // Create cell and insert in sorted order
+        cel=doc.createElementNS(NS,'c');
+        cel.setAttribute('r',ref);
+        const newCol=parseInt(colNum);
+        let inserted=false;
+        for(const existC of rowEl.getElementsByTagName('c')){
+          const ec=cIdx(existC.getAttribute('r').replace(/\d/g,''))+1;
+          if(ec>newCol){rowEl.insertBefore(cel,existC);inserted=true;break;}
+        }
+        if(!inserted)rowEl.appendChild(cel);
+      }
+
+      // Remove formula & existing value children
+      const toRm=[];
+      for(const ch of cel.childNodes)toRm.push(ch);
+      toRm.forEach(ch=>cel.removeChild(ch));
+      // Clear type but keep style (s attribute)
+      cel.removeAttribute('t');
+
+      if(value===null||value===undefined)continue;
+
+      if(typeof value==='number'){
+        const v=doc.createElementNS(NS,'v');v.textContent=String(value);cel.appendChild(v);
+      }else{
+        const i=ss.idx(String(value));
+        cel.setAttribute('t','s');
+        const v=doc.createElementNS(NS,'v');v.textContent=String(i);cel.appendChild(v);
+      }
+    }
+  }
+
+  // Serialize - prepend declaration if missing
+  let out=new XMLSerializer().serializeToString(doc);
+  if(!out.startsWith('<?xml'))out='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+out;
+  return out;
+}
+
+/* ═══════════════════════════ DATA MAPPING ═══════════════════════════ */
+// Returns {sheetPathInZip: {rowNum: {colNum(1-based): value}}}
+function buildCellMap(d, sm, extra){
+  const kg=g=>g!=null?+(g/1000).toFixed(3):null;
+  const vol=(a,b,c)=>a&&b&&c?+((a*b*c).toFixed(2)):null;
+  const sap=typeof d.sap_num==='number'?d.sap_num:Number(d.sap_num);
+
+  const pb_kg=kg(d.pz_pb),pn_kg=kg(d.pz_pn);
+  const cj_kg=kg(d.cj_pb),tar_kg=kg(d.tar_pb);
+  const cj_vol=vol(d.cj_h,d.cj_w,d.cj_d),tar_vol=vol(d.tar_h,d.tar_w,d.tar_d);
+
+  const p=name=>sm[name]||sm[name.trim()];
+
+  const maps={};
+  const set=(sheet,row,col,val)=>{
+    const path=p(sheet);if(!path)return;
+    if(!maps[path])maps[path]={};
+    if(!maps[path][row])maps[path][row]={};
+    maps[path][row][col]=val;
+  };
+
+  // ── DATOS BASE (row 3) ──
+  set('DATOS BASE',3,1,sap);                         // A: Material
+  set('DATOS BASE',3,4,d.descripcion);               // D: Texto breve
+  set('DATOS BASE',3,7,d.unidad);                    // G: UMB
+  set('DATOS BASE',3,8,extra.matkl||null);           // H: Grupo de artículos
+  set('DATOS BASE',3,14,pb_kg);                      // N: Peso bruto KG
+  set('DATOS BASE',3,16,pn_kg);                      // P: Peso neto KG
+  set('DATOS BASE',3,17,d.pz_vol);                   // Q: Volumen CM3
+  set('DATOS BASE',3,20,d.upc_a);                    // T: EAN11
+  set('DATOS BASE',3,21,extra.normt||null);           // U: Denominación estándar
+
+  // ── UNIDADES MEDIDA ──
+  // PZA (row 3)
+  set('UNIDADES MEDIDA',3,1,sap);      // A
+  set('UNIDADES MEDIDA',3,6,d.upc_a);  // F: EAN
+  set('UNIDADES MEDIDA',3,8,d.pz_d);   // H: Longitud
+  set('UNIDADES MEDIDA',3,9,d.pz_w);   // I: Ancho
+  set('UNIDADES MEDIDA',3,10,d.pz_h);  // J: Altura
+  set('UNIDADES MEDIDA',3,17,d.pz_vol);// Q: Volumen
+  set('UNIDADES MEDIDA',3,20,pb_kg);   // T: Peso bruto KG
+  // CJ (row 4)
+  set('UNIDADES MEDIDA',4,1,sap);
+  set('UNIDADES MEDIDA',4,4,d.pzs_cj); // D: Numerador
+  set('UNIDADES MEDIDA',4,6,d.dun14);  // F: EAN DUN14
+  set('UNIDADES MEDIDA',4,8,d.cj_d);   // H
+  set('UNIDADES MEDIDA',4,9,d.cj_w);   // I
+  set('UNIDADES MEDIDA',4,10,d.cj_h);  // J
+  set('UNIDADES MEDIDA',4,17,cj_vol);  // Q
+  set('UNIDADES MEDIDA',4,20,cj_kg);   // T
+  // PAL (row 5)
+  set('UNIDADES MEDIDA',5,1,sap);
+  set('UNIDADES MEDIDA',5,4,d.pzs_pal); // D: Numerador (AE FS → pzas/pallet)
+  set('UNIDADES MEDIDA',5,6,d.cod_tar);// F: EAN tarima
+  set('UNIDADES MEDIDA',5,8,d.tar_d);  // H
+  set('UNIDADES MEDIDA',5,9,d.tar_w);  // I
+  set('UNIDADES MEDIDA',5,10,d.tar_h); // J
+  set('UNIDADES MEDIDA',5,17,tar_vol); // Q
+  set('UNIDADES MEDIDA',5,20,tar_kg);  // T
+  set('UNIDADES MEDIDA',6,25,d.cj_tar);// Y6: Cajas/tarima (AC FS)
+
+  // ── VENTAS (row 3) ──
+  set('VENTAS',3,1,sap);
+  set('VENTAS',3,11,extra.taxkm||null);  // K: Clasificación fiscal material
+
+  // ── VENTAS CENTRO ──
+  set('VENTAS CENTRO',3,1,sap);set('VENTAS CENTRO',4,1,sap);
+  set('VENTAS CENTRO',3,7,extra.prctr||null);  // G: Centro de beneficio MX01
+  set('VENTAS CENTRO',4,7,extra.prctr||null);  // G: Centro de beneficio MXP1
+
+  // ── COMPRAS ──
+  set('COMPRAS',3,1,sap);set('COMPRAS',3,12,d.descripcion);
+
+  // ── PLANIFICACIÓN NECESIDADES ──
+  set('PLANIFICACIÓN NECESIDADES',3,1,sap);
+
+  // ── PREPARACION TRABAJO ──
+  set('PREPARACION TRABAJO',3,1,sap);set('PREPARACION TRABAJO',3,5,d.unidad);
+
+  // ── DATOS CENTRO ALMACÉN ── (rows 3-9)
+  for(let r=3;r<=9;r++){
+    set('DATOS CENTRO ALMACÉN',r,1,sap);
+    set('DATOS CENTRO ALMACÉN',r,6,extra.prctr||null); // F: Centro de beneficio
+  }
+
+  // ── GESTIÓN DE CALIDAD ──
+  set('GESTIÓN DE CALIDAD',3,1,sap);
+
+  // ── CONTABILIDAD ──
+  set('CONTABILIDAD',3,1,sap);set('CONTABILIDAD',4,1,sap);
+
+  // ── CALCULO COSTO ──
+  set('CALCULO COSTO',3,1,sap);set('CALCULO COSTO',4,1,sap);
+
+  // ── EWM EJECUCIÓN WM ──
+  set('EWM EJECUCIÓN WM',3,1,sap);
+
+  // ── CLASIFICACION  (trailing space) ──
+  const clasSheet='CLASIFICACION ';
+  const clasRow=(r)=>{
+    set(clasSheet,r,1,sap);set(clasSheet,r,3,d.contenido);set(clasSheet,r,4,d.unidad);
+    set(clasSheet,r,5,d.pz_h);set(clasSheet,r,6,d.pz_w);set(clasSheet,r,7,d.pz_d);set(clasSheet,r,8,d.pz_pb);
+    set(clasSheet,r,9,d.cj_h);set(clasSheet,r,10,d.cj_w);set(clasSheet,r,11,d.cj_d);set(clasSheet,r,12,d.cj_pb);
+    set(clasSheet,r,13,d.tar_h);set(clasSheet,r,14,d.tar_w);set(clasSheet,r,15,d.tar_d);set(clasSheet,r,16,d.tar_pb);
+    set(clasSheet,r,17,d.pzs_cj);set(clasSheet,r,18,d.n_camas);set(clasSheet,r,19,d.cj_cama);
+    set(clasSheet,r,20,d.pzs_cama);set(clasSheet,r,21,d.cj_tar);set(clasSheet,r,22,d.pzs_pal);
+    set(clasSheet,r,23,d.cj_tara);set(clasSheet,r,24,d.cod_tar);set(clasSheet,r,25,d.upc_a);
+  };
+  clasRow(3);clasRow(4);
+
+  return maps;
+}
+
+/* ═══════════════════════════ ESTADO ═══════════════════════════ */
+let FS_AB=null,TPL_AB=null,ALL=[],SEL=null,OUT=null;
+
+/* ═══════════════════════════ DRAG & DROP ═══════════════════════════ */
+function setupDrop(dzId,inputId,callback){
+  const dz=document.getElementById(dzId);
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('ov');});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('ov'));
+  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('ov');if(e.dataTransfer.files[0])callback(e.dataTransfer.files[0]);});
+  document.getElementById(inputId).addEventListener('change',e=>{if(e.target.files[0])callback(e.target.files[0]);});
+}
+setupDrop('dz1','fi1',f=>readFile(f,'fs'));
+setupDrop('dz2','fi2',f=>readFile(f,'tpl'));
+
+function setSt(id,cls,spin,msg){
+  const el=document.getElementById(id);
+  el.className='sb '+cls;el.classList.remove('hidden');
+  el.innerHTML=(spin?'<div class="spin"></div>':'')+`<span>${msg}</span>`;
+}
+
+/* ═══════════════════════════ LEER ARCHIVOS ═══════════════════════════ */
+async function readFile(file,type){
+  setSt('ust','i',true,`Leyendo "${file.name}"…`);
+  try{
+    const ab=await file.arrayBuffer();
+    if(type==='fs'){
+      FS_AB=ab;
+      const zip=new ZipR(ab),xlsx=new XLSXRd(zip);
+      const sm=await xlsx.sheetMap();
+      const sn=Object.keys(sm).find(n=>n.trim().toUpperCase()==='OK');
+      if(!sn)throw new Error(`Hoja "OK" no encontrada. Hojas: ${Object.keys(sm).join(', ')}`);
+      const data=await xlsx.getSheet(sn);
+      const prods=[];
+      for(let i=3;i<data.length;i++){const r=data[i];if(!r||r[1]==null)continue;prods.push(parseRow(r));}
+      if(prods.length===0)throw new Error('No hay datos de productos en fila 4+');
+      ALL=prods;
+      document.getElementById('fn1').textContent=file.name;
+      document.getElementById('b1').classList.remove('hidden');
+      document.getElementById('dz1').classList.add('ok');
+      buildSelector(prods);loadProd(0);
+    }else{
+      TPL_AB=ab;
+      document.getElementById('fn2').textContent=file.name;
+      document.getElementById('b2').classList.remove('hidden');
+      document.getElementById('dz2').classList.add('ok');
+    }
+    setSt('ust','s',false,`✅ "${file.name}" cargado correctamente`);
+    checkReady();
+  }catch(err){setSt('ust','e',false,'❌ '+err.message);console.error(err);}
+}
+
+function checkReady(){
+  // Mostrar el paso de datos adicionales cuando ambos archivos y producto estén listos
+  if(FS_AB&&TPL_AB&&SEL){
+    document.getElementById('s3').classList.remove('hidden');
+  }
+}
+
+// Validar campos adicionales y avanzar al paso 4
+function confirmExtra(){
+  const matkl=document.getElementById('f_matkl').value.trim();
+  const taxkm=document.getElementById('f_taxkm').value.trim();
+  const fval=document.getElementById('fval');
+  const fvalmsg=document.getElementById('fvalmsg');
+
+  if(!matkl){
+    fval.className='sb e';fval.classList.remove('hidden');
+    fvalmsg.textContent='⚠️ El campo "Grupo de artículos" es obligatorio.';
+    document.getElementById('f_matkl').focus();return;
+  }
+  if(!taxkm){
+    fval.className='sb e';fval.classList.remove('hidden');
+    fvalmsg.textContent='⚠️ El campo "Clasificación fiscal del material" es obligatorio.';
+    document.getElementById('f_taxkm').focus();return;
+  }
+  fval.classList.add('hidden');
+  document.getElementById('s4').classList.remove('hidden');
+  document.getElementById('s4').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function parseRow(row){
+  const v=i=>(row[i]!==null&&row[i]!==undefined&&row[i]!=='-'&&row[i]!=='')?row[i]:null;
+  const n=i=>{const x=row[i];return(x!=null&&x!=='-'&&x!=='')?Number(x):null;};
+  return{
+    marca:v(0),sap_num:v(1),pais:v(2),descripcion:v(3),
+    contenido:n(4),unidad:v(5)||'PZA',
+    upc_a:n(6),dun14:n(7),cod_tar:n(8),
+    pz_h:n(11),pz_w:n(12),pz_d:n(13),pz_pn:n(14),pz_pb:n(15),pz_vol:n(16),
+    cj_hi:n(17),cj_wi:n(18),cj_di:n(19),
+    cj_h:n(20),cj_w:n(21),cj_d:n(22),cj_tara:n(23),cj_pb:n(24),
+    pzs_cj:n(25),n_camas:n(26),cj_cama:n(27),cj_tar:n(28),pzs_cama:n(29),pzs_pal:n(30),
+    tar_h:n(31),tar_w:n(32),tar_d:n(33),tar_pb:n(34),
+  };
+}
+
+/* ═══════════════════════════ SELECTOR ═══════════════════════════ */
+function buildSelector(prods){
+  const sel=document.getElementById('psel');
+  sel.innerHTML=prods.map((p,i)=>`<option value="${i}">${i+1}. ${p.sap_num} — ${p.descripcion||p.marca||'?'}</option>`).join('');
+  if(prods.length>1){
+    document.getElementById('mpa').classList.remove('hidden');
+    const r=document.getElementById('psr');r.style.display='flex';r.classList.remove('hidden');
+  }
+}
+function selProd(){loadProd(parseInt(document.getElementById('psel').value));}
+function loadProd(idx){
+  SEL=ALL[idx];OUT=null;
+  document.getElementById('bdl').classList.add('hidden');
+  document.getElementById('gst').classList.add('hidden');
+  renderPreview(SEL);
+  document.getElementById('s2').classList.remove('hidden');
+  checkReady();
+}
+
+/* ═══════════════════════════ PREVIEW ═══════════════════════════ */
+const fv=(v,c='vn')=>v!=null?`<span class="${c}">${v}</span>`:'<span style="color:#ccc">—</span>';
+const fc=v=>fv(v,'vc'),fn=v=>fv(v);
+function renderPreview(d){
+  document.getElementById('prev').innerHTML=`
+  <div class="dg">
+    <div class="ds"><h3>📦 Identificación</h3><table class="dt">
+      <tr><th>Campo</th><th>Valor</th></tr>
+      <tr><td>Marca</td><td>${fv(d.marca,'')}</td></tr>
+      <tr><td>N° SAP</td><td>${fc(d.sap_num)}</td></tr>
+      <tr><td>Descripción</td><td><strong>${fv(d.descripcion,'')}</strong></td></tr>
+      <tr><td>Contenido</td><td>${fn(d.contenido)} ${fv(d.unidad,'')}</td></tr>
+      <tr><td>UPC-A</td><td>${fc(d.upc_a)}</td></tr>
+      <tr><td>DUN-14 Corrugado</td><td>${fc(d.dun14)}</td></tr>
+      <tr><td>DUN-14 Tarima</td><td>${fc(d.cod_tar)}</td></tr>
+    </table></div>
+    <div class="g3">
+      <div class="ds"><h3>🧴 Pieza</h3><table class="dt">
+        <tr><th></th><th>Valor</th></tr>
+        <tr><td>Alto cm</td><td>${fn(d.pz_h)}</td></tr><tr><td>Ancho cm</td><td>${fn(d.pz_w)}</td></tr>
+        <tr><td>Prof cm</td><td>${fn(d.pz_d)}</td></tr><tr><td>Peso neto grs</td><td>${fn(d.pz_pn)}</td></tr>
+        <tr><td>Peso bruto grs</td><td>${fn(d.pz_pb)}</td></tr><tr><td>Volumen cm³</td><td>${fn(d.pz_vol)}</td></tr>
+      </table></div>
+      <div class="ds"><h3>📦 Corrugado (ext)</h3><table class="dt">
+        <tr><th></th><th>Valor</th></tr>
+        <tr><td>Alto cm</td><td>${fn(d.cj_h)}</td></tr><tr><td>Ancho cm</td><td>${fn(d.cj_w)}</td></tr>
+        <tr><td>Prof cm</td><td>${fn(d.cj_d)}</td></tr><tr><td>Tara grs</td><td>${fn(d.cj_tara)}</td></tr>
+        <tr><td>Peso bruto grs</td><td>${fn(d.cj_pb)}</td></tr><tr><td>Pzs/caja</td><td>${fn(d.pzs_cj)}</td></tr>
+      </table></div>
+      <div class="ds"><h3>🏗️ Tarima</h3><table class="dt">
+        <tr><th></th><th>Valor</th></tr>
+        <tr><td>Alto cm</td><td>${fn(d.tar_h)}</td></tr><tr><td>Ancho cm</td><td>${fn(d.tar_w)}</td></tr>
+        <tr><td>Prof cm</td><td>${fn(d.tar_d)}</td></tr><tr><td>Peso bruto grs</td><td>${fn(d.tar_pb)}</td></tr>
+        <tr><td>Camas</td><td>${fn(d.n_camas)}</td></tr><tr><td>Cjas/cama</td><td>${fn(d.cj_cama)}</td></tr>
+        <tr><td>Cjas/tarima</td><td>${fn(d.cj_tar)}</td></tr><tr><td>Pzs/pallet</td><td>${fn(d.pzs_pal)}</td></tr>
+      </table></div>
+    </div>
+  </div>`;
+}
+
+/* ═══════════════════════════ GENERAR ═══════════════════════════ */
+async function generate(){
+  if(!SEL||!TPL_AB)return;
+  const btn=document.getElementById('bgen');btn.disabled=true;
+  const gs=document.getElementById('gst');gs.className='sb i';gs.classList.remove('hidden');
+  document.getElementById('gmsg').textContent='⚙️ Procesando template…';
+
+  // Leer campos adicionales ingresados por el usuario
+  const extra={
+    matkl: document.getElementById('f_matkl').value.trim()||null,
+    normt: document.getElementById('f_normt').value.trim()||null,
+    taxkm: document.getElementById('f_taxkm').value.trim()||null,
+    prctr: document.getElementById('f_prctr').value.trim()||null,
+  };
+
+  try{
+    const tplZip=new ZipR(TPL_AB);
+    const fsZip=new ZipR(FS_AB);
+    const fsXlsx=new XLSXRd(fsZip);
+
+    // Load shared strings from template
+    const ss=new SS();
+    const ssXml=await tplZip.text('xl/sharedStrings.xml');
+    ss.load(ssXml);
+
+    // Get sheet map from template
+    const tplXlsx=new XLSXRd(tplZip);
+    const sm=await tplXlsx.sheetMap();
+
+    // Build cell update map (incluyendo datos adicionales del formulario)
+    const cellMap=buildCellMap(SEL,sm,extra);
+
+    // Process all files
+    const outZip=new ZipW();
+    const entries=tplZip.entries();
+
+    // First pass: collect all worksheet XMLs that need modification
+    const modifiedXmls={};
+    for(const[path,rowCols] of Object.entries(cellMap)){
+      const xmlStr=await tplZip.text(path);
+      if(xmlStr)modifiedXmls[path]=injectCells(xmlStr,rowCols,ss);
+    }
+
+    // Build output ZIP (all files, modified or original)
+    for(const name of Object.keys(entries)){
+      if(name==='xl/sharedStrings.xml'){
+        // Rebuild shared strings with any new entries
+        outZip.add(name,ss.toXml());
+      }else if(modifiedXmls[name]){
+        outZip.add(name,modifiedXmls[name]);
+      }else{
+        // Copy original (preserve binary files like vbaProject.bin, images, etc.)
+        const raw=await tplZip.bytes(name);
+        if(raw)outZip.add(name,raw);
+      }
+    }
+
+    OUT=outZip.build();
+    gs.className='sb s';
+    document.getElementById('gmsg').textContent='✅ Archivo generado — formato original conservado';
+    document.getElementById('bdl').classList.remove('hidden');
+  }catch(err){
+    const gs=document.getElementById('gst');gs.className='sb e';
+    document.getElementById('gmsg').textContent='❌ '+err.message;
+    console.error(err);
+  }
+  btn.disabled=false;
+}
+
+function doDownload(){
+  if(!OUT)return;
+  const name=(SEL.marca||'PT').replace(/[^a-zA-Z0-9]/g,'_');
+  const fn=`LY PT COMPLETO - ${name} ${SEL.sap_num}.xlsx`;
+  const blob=new Blob([OUT],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=fn;a.click();URL.revokeObjectURL(a.href);
+}
+</script>
+</body>
+</html>
