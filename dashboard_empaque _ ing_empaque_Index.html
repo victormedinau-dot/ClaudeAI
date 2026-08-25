@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Dashboard de Empaque · Planta Bebidas MMN</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#eef2f4;
+    --card:#ffffff;
+    --ink:#132630;
+    --muted:#6d7d88;
+    --line:#e2e8ec;
+
+    --teal:#0ea5a0;
+    --teal-l:#e3f7f5;
+    --coral:#ff6b4a;
+    --coral-l:#ffe9e2;
+    --indigo:#5b5fef;
+    --indigo-l:#eceafd;
+
+    --good:#22c55e;
+    --good-l:#e7f8ee;
+    --mid:#f5b942;
+    --mid-l:#fef4e0;
+    --bad:#ef4444;
+    --bad-l:#fdeaea;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter', sans-serif;
+    padding:36px 44px 70px;
+  }
+  .disp{font-family:'Space Grotesk', sans-serif;}
+
+  header{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    margin-bottom:16px; flex-wrap:wrap; gap:18px;
+  }
+  .eyebrow{
+    font-size:11.5px; font-weight:700; letter-spacing:0.16em; text-transform:uppercase;
+    color:var(--teal); margin-bottom:8px;
+  }
+  h1{
+    font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:32px;
+    letter-spacing:-0.01em; color:var(--ink);
+  }
+  header .sub{color:var(--muted); font-size:14px; margin-top:6px; max-width:520px;}
+  .header-actions{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .period{
+    display:flex; align-items:center; gap:10px;
+    background:var(--ink); color:#fff; border-radius:30px; padding:9px 18px 9px 8px;
+  }
+  .period .dot{width:26px; height:26px; border-radius:50%; background:var(--coral); display:flex; align-items:center; justify-content:center; font-size:13px;}
+  .period span{font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:14px; letter-spacing:0.02em;}
+
+  .upload-pill{
+    position:relative; overflow:hidden; cursor:pointer;
+    display:flex; align-items:center; gap:9px;
+    background:var(--teal); color:#fff; border:none;
+    border-radius:30px; padding:9px 18px 9px 8px;
+    font-family:'Inter',sans-serif; font-weight:700; font-size:13.5px;
+  }
+  .upload-pill .dot{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;font-size:13px;}
+  .upload-pill input{position:absolute; inset:0; opacity:0; cursor:pointer;}
+
+  #statusBar{
+    display:none; align-items:center; gap:8px;
+    font-size:12.5px; font-weight:600; border-radius:10px;
+    padding:10px 16px; margin-bottom:18px;
+  }
+  #statusBar.ok{display:flex; background:var(--good-l); color:#178a4c;}
+  #statusBar.err{display:flex; background:var(--bad-l); color:#c0392b;}
+
+  /* BENTO GRID */
+  .bento{
+    display:grid;
+    grid-template-columns: 0.95fr 0.65fr 0.95fr 0.65fr 0.65fr;
+    gap:18px; margin-bottom:18px;
+  }
+  .card{
+    background:var(--card); border-radius:18px; padding:22px 24px;
+    box-shadow:0 1px 2px rgba(19,38,48,0.04), 0 8px 20px -12px rgba(19,38,48,0.12);
+  }
+
+  .hero{display:flex; align-items:center; gap:18px;}
+  .hero svg{flex:none;}
+  .hero .htext{display:flex; flex-direction:column; min-width:0;}
+  .hero .htext .label{font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; font-weight:600;}
+  .hero .htext .big{font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:36px; margin-top:4px; line-height:1;}
+  .hero .htext .note{font-size:12px; color:var(--muted); margin-top:10px; line-height:1.5;}
+
+  .mini-kpi{display:flex; flex-direction:column; justify-content:space-between; height:100%;}
+  .mini-kpi .icon{
+    width:38px; height:38px; border-radius:10px; display:flex; align-items:center; justify-content:center;
+    margin-bottom:14px;
+  }
+  .mini-kpi .label{font-size:11.5px; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; font-weight:600;}
+  .mini-kpi .val{font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:28px; margin-top:4px;}
+  .mini-kpi .val small{font-size:14px; color:var(--muted); font-weight:600;}
+  .mini-kpi .foot{font-size:11.5px; color:var(--muted); margin-top:10px;}
+
+  /* TREND ROW */
+  .trend-row{display:grid; grid-template-columns:repeat(4,1fr); gap:18px; margin-bottom:18px;}
+  .trend-card .thead{display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;}
+  .trend-card .ttitle{font-family:'Space Grotesk', sans-serif; font-weight:600; font-size:16px;}
+  .trend-card .tsub{font-size:11.5px; color:var(--muted); margin-top:2px;}
+  .trend-card .ttotal{font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:22px; text-align:right;}
+  .trend-card .ttotal small{display:block; font-size:10px; color:var(--muted); font-weight:600; text-transform:uppercase;}
+  .trend-card canvas{margin-top:10px; max-height:130px;}
+
+  /* SECTION HEADS */
+  .section-head{display:flex; justify-content:space-between; align-items:baseline; margin:30px 0 16px; flex-wrap:wrap; gap:10px;}
+  .section-head h2{font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:21px;}
+  .section-head p{font-size:12.5px; color:var(--muted);}
+  .legend{display:flex; gap:16px; font-size:12px; color:var(--muted); align-items:center; flex-wrap:wrap;}
+  .legend .chip{display:flex; align-items:center; gap:6px;}
+  .legend .sw{width:10px; height:10px; border-radius:3px;}
+
+  /* PROJECT CARDS GRID */
+  .proj-grid{display:grid; grid-template-columns:repeat(3, 1fr); gap:16px;}
+  .tipo-block{margin-bottom:26px;}
+  .tipo-block:last-child{margin-bottom:0;}
+  .tipo-block-head{display:flex; align-items:center; gap:9px; margin-bottom:12px;}
+  .tipo-block-head .sw{width:11px; height:11px; border-radius:3px; flex:none;}
+  .tipo-block-head h3{font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:15px;}
+  .tipo-block-head .count{font-size:12px; color:var(--muted); font-weight:600;}
+  .proj-card{
+    background:var(--card); border-radius:16px; padding:18px;
+    display:flex; gap:14px; align-items:flex-start;
+    box-shadow:0 1px 2px rgba(19,38,48,0.04), 0 8px 18px -14px rgba(19,38,48,0.15);
+    border-top:3px solid var(--status-color, var(--mid));
+    position:relative;
+  }
+  .proj-card .medal{
+    position:absolute; top:-10px; right:-8px; width:30px; height:auto;
+    filter:drop-shadow(0 3px 5px rgba(19,38,48,0.28));
+    pointer-events:none;
+  }
+  .proj-card .gauge{flex:none; position:relative; width:64px; height:64px;}
+  .proj-card .gauge svg{transform:rotate(-90deg);}
+  .proj-card .gauge .gval{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:14.5px;
+  }
+  .proj-card .info{flex:1; min-width:0;}
+  .proj-card .pname{font-weight:700; font-size:13.5px; line-height:1.25; margin-bottom:6px;}
+  .proj-card .tags{display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap;}
+  .cat-pill{font-size:10px; font-weight:700; padding:3px 8px; border-radius:20px; letter-spacing:0.02em;}
+  .tipo-pill{font-size:10px; font-weight:600; padding:3px 8px; border-radius:20px; background:var(--indigo-l); color:var(--indigo);}
+  .proj-card .comment{font-size:11.5px; color:var(--muted); line-height:1.45;}
+
+  /* BOTTOM ROW */
+  .bottom-row{display:grid; grid-template-columns:1fr; gap:18px; margin-top:18px;}
+  .stat-card{display:flex; align-items:center; gap:20px;}
+  .stat-card .num{font-family:'Space Grotesk', sans-serif; font-weight:700; font-size:46px;}
+  .stat-card .txt{font-size:12.5px; color:var(--muted); line-height:1.5;}
+
+  footer{margin-top:34px; color:var(--muted); font-size:11.5px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:8px;}
+
+  .empty-msg{color:var(--muted); font-size:13px; padding:20px 4px;}
+  .capturing .no-pdf{visibility:hidden;}
+
+  @media (max-width:1300px){
+    .bento{grid-template-columns:1fr 1fr;}
+  }
+  @media (max-width:1100px){
+    .trend-row{grid-template-columns:1fr 1fr;}
+    .proj-grid{grid-template-columns:1fr 1fr;}
+    .bottom-row{grid-template-columns:1fr;}
+  }
+  @media (max-width:640px){
+    .proj-grid{grid-template-columns:1fr;}
+    .bento{grid-template-columns:1fr;}
+    .trend-row{grid-template-columns:1fr;}
+    body{padding:24px 18px 50px;}
+  }
+</style>
+</head>
+<body>
+
+<div id="pageRoot">
+
+<header>
+  <div>
+    <h1>Dashboard de Empaque</h1>
+    <div class="sub">Visitas a planta, especificaciones, aprobaciones en WebCenter y avance de la línea de proyectos activos.</div>
+  </div>
+  <div class="header-actions no-pdf">
+    <div class="period"><span class="dot">📦</span><span id="periodTag">—</span></div>
+    <button class="upload-pill" id="uploadBtn" title="Cargar un nuevo Excel con esta misma estructura">
+      <span class="dot">📤</span><span>Cargar Excel</span>
+      <input type="file" id="fileInput" accept=".xlsx,.xls">
+    </button>
+    <button class="upload-pill" id="pdfBtn" title="Descargar el dashboard como PDF de una sola página" style="background:var(--ink);">
+      <span class="dot">📄</span><span>Descargar PDF</span>
+    </button>
+  </div>
+</header>
+
+<div id="statusBar" class="no-pdf"></div>
+
+<!-- BENTO KPI ROW -->
+<div class="bento" id="bentoRow"></div>
+
+<!-- TREND ROW -->
+<div class="trend-row" id="trendRow"></div>
+
+<!-- AHORRO STAT -->
+<div id="ahorroRow" style="margin-bottom:18px;"></div>
+
+<!-- PROJECT CARDS -->
+<div class="section-head">
+  <div>
+    <h2>Avance por proyecto</h2>
+    <p id="projCount">— proyectos · agrupados por tipo, ordenados de mayor a menor avance</p>
+  </div>
+  <div class="legend">
+    <div class="chip"><img id="medalLegendIcon" alt="" style="width:16px;height:auto;">Producto ya en punto de venta</div>
+  </div>
+</div>
+<div id="projGrid"></div>
+
+<!-- BOTTOM ROW -->
+<div class="bottom-row" id="bottomRow"></div>
+
+<footer>
+  <span id="sourceTag">Fuente: plantilla_dashboard_empaque.xlsx</span>
+  <span id="updatedTag">Versión visual · tablero para revisión directiva</span>
+</footer>
+
+</div>
+
+
+<script>
+Chart.defaults.font.family = "'Inter', sans-serif";
+Chart.defaults.color = '#6d7d88';
+Chart.defaults.font.size = 11;
+
+/* ============ DEFAULT DATA (plantilla_dashboard_empaque.xlsx) ============ */
+const DEFAULT_DATA = {
+  mensual: [
+    {mes:'Abr',visitas:5,horas:42,espec_suerox:0,espec_mm:2,espec_pc:0,espec_otc:50,web_suerox:18,web_mm:6,web_pc:6,web_otc:6,web_pack:6},
+    {mes:'May',visitas:5,horas:35,espec_suerox:28,espec_mm:7,espec_pc:0,espec_otc:50,web_suerox:65,web_mm:0,web_pc:0,web_otc:0,web_pack:0},
+    {mes:'Jun',visitas:7,horas:54,espec_suerox:9,espec_mm:5,espec_pc:0,espec_otc:50,web_suerox:26,web_mm:2,web_pc:2,web_otc:2,web_pack:2},
+    {mes:'Jul',visitas:4,horas:30,espec_suerox:5,espec_mm:2,espec_pc:5,espec_otc:50,web_suerox:55,web_mm:0,web_pc:0,web_otc:0,web_pack:0},
+    {mes:'Agos',visitas:5,horas:20,espec_suerox:10,espec_mm:15,espec_pc:13,espec_otc:50,web_suerox:20,web_mm:30,web_pc:30,web_otc:300,web_pack:300}
+  ],
+  proyectos: [
+    {proyecto:'Suerox Mineral 12 Pack',categoria:'Bebidas',tipo:'Regular',avance:100,claves:'2',comentario:'A solicitud de MKT se corre rediseño de artes: cambio de "IONES" por "ELECTROLITOS".',enPuntoVenta:true},
+    {proyecto:'Suerox Mineral 24 Pack',categoria:'Bebidas',tipo:'Regular',avance:25,claves:'2',comentario:'A solicitud de MKT se revisa factibilidad de cambiar a formato de 24 piezas por charola y validar cantidad de sabores.',enPuntoVenta:false},
+    {proyecto:'Suero Oral Repone',categoria:'Bebidas',tipo:'Regular',avance:75,claves:'15',comentario:'Desarrollo sigue en transferencia de sabores. Falta actualizar especificación de botella (pendiente Calidad).',enPuntoVenta:false},
+    {proyecto:'Suero Oral Repone Clean',categoria:'Bebidas',tipo:'Regular',avance:50,claves:'15',comentario:'Usa los mismos materiales que Suero Oral Repone, con diseños y fórmulas diferentes. Artes en proceso de revisión.',enPuntoVenta:false},
+    {proyecto:'Suerox Cambio de Imagen',categoria:'Bebidas',tipo:'Regular',avance:50,claves:'60',comentario:'Aplica el rediseño de arte a todas las presentaciones nacionales por cambio de "IONES" a "ELECTROLITOS".',enPuntoVenta:false},
+    {proyecto:'Suerox 630 ml Nacional en Charola',categoria:'Bebidas',tipo:'Regular',avance:100,claves:'11',comentario:'Pendiente entrega de carpeta para producir en septiembre.',enPuntoVenta:false},
+    {proyecto:'Suerox 1000 ml Nacional en Charola',categoria:'Bebidas',tipo:'Regular',avance:0,claves:'2',comentario:'Pendiente definición de maquila y compra de charolas. Se cuenta con pre-especificación de charola.',enPuntoVenta:false},
+    {proyecto:'Pomada de la Campana 19g Tepezcohuite',categoria:'MM',tipo:'Regular',avance:100,claves:'1',comentario:'Pendiente fecha de arranque. Estiba ya probada (mismo corrugado, otro producto).',enPuntoVenta:false},
+    {proyecto:'Sistema GB (SH1, SH2 y Solución)',categoria:'MM',tipo:'Regular',avance:100,claves:'3',comentario:'Dar seguimiento a tarimas que lleguen a CEDIS.',enPuntoVenta:false},
+    {proyecto:'Célula Pomada',categoria:'MM',tipo:'Célula',avance:0,claves:'TBD',comentario:'On-hold. Se llegó hasta tener dummy 3D.',enPuntoVenta:false},
+    {proyecto:'Célula Wildroot',categoria:'MM',tipo:'Célula',avance:0,claves:'TBD',comentario:'On-hold. Se llegó hasta tener dummy 3D.',enPuntoVenta:false},
+    {proyecto:'Groomen Cambio de Banda Lubricante',categoria:'MM',tipo:'Regular',avance:25,claves:'1',comentario:'En espera de información por parte del maquilador (full service).',enPuntoVenta:false},
+    {proyecto:'Cambio Resina Marlex Tapa Suerox L-1',categoria:'Bebidas',tipo:'Ahorro',avance:100,claves:'TBD',comentario:'Pruebas satisfactorias, Planta da su VoBo.',enPuntoVenta:false},
+    {proyecto:'Cambio Resina Marlex Tapa Suerox L-3',categoria:'Bebidas',tipo:'Ahorro',avance:25,claves:'1',comentario:'Pruebas pendientes, fecha por definir.',enPuntoVenta:false},
+    {proyecto:'Cambio a Termoencogible Delta a JK',categoria:'Bebidas',tipo:'Ahorro',avance:75,claves:'3',comentario:'Falta probar en Línea 3; ya se usa en Línea 1 para 630 ml y Suero Oral Repone.',enPuntoVenta:false},
+    {proyecto:'Cambio Resina Marlex Tapa Suerox L-8',categoria:'Bebidas',tipo:'Ahorro',avance:25,claves:'1',comentario:'Pruebas pendientes, fecha por definir.',enPuntoVenta:false},
+    {proyecto:'Cambio a Termoencogible Delta a PRUEBA',categoria:'Bebidas',tipo:'Ahorro',avance:75,claves:'3',comentario:'Falta probar en Línea 3; ya se usa en Línea 1 para 630 ml y Suero Oral Repone.',enPuntoVenta:false},
+  ],
+  ahorro: [
+    {proyecto:'Cambio Resina Marlex Tapa Suerox L-1',monto:0,comentario:''},
+    {proyecto:'Cambio Resina Marlex Tapa Suerox L-1 y L-3',monto:33000,comentario:'Ahorro de $0.33 por tapa, $33000 cada 100 millares'},
+    {proyecto:'Cambio a Termoencogible Delta a JK',monto:17000,comentario:'Ahorro de $17 por kilo, $17000 por tonelada'}
+  ],
+  objetivo: [
+    {proyecto:'Suerox Mineral 12 Pack',categoria:'Bebidas',avance:100},
+    {proyecto:'Suerox Mineral 24 Pack',categoria:'Bebidas',avance:25},
+    {proyecto:'Suero Oral Repone',categoria:'Bebidas',avance:75},
+    {proyecto:'Suero Oral Repone Clean',categoria:'Bebidas',avance:50}
+  ],
+  sourceLabel:'plantilla_dashboard_empaque.xlsx'
+};
+
+const MEDAL_ICON = "data:image/png;base64,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";
+let STATE = { data: DEFAULT_DATA };
+let charts = [];
+const PALETTE = [
+  {base:'#0ea5a0', light:'#e3f7f5'}, // teal
+  {base:'#ff6b4a', light:'#ffe9e2'}, // coral
+  {base:'#5b5fef', light:'#eceafd'}, // indigo
+  {base:'#f5b942', light:'#fef4e0'}, // mid/amber
+  {base:'#06b6d4', light:'#e0f7fa'},
+  {base:'#a855f7', light:'#f3e8ff'}
+];
+
+/* ============ EXCEL PARSING ============ */
+function normHeader(h){
+  return String(h||'').trim().toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[¿?¡!.,;:()"'#]/g,'')
+    .replace(/[\s_]+/g,'');
+}
+function findCol(headerMap, candidates){
+  for(const c of candidates){
+    const key = normHeader(c);
+    if(headerMap[key]!==undefined) return headerMap[key];
+  }
+  return null;
+}
+// Limpia espacios extra al inicio/final para que "Ahorro" y "Ahorro " no se cuenten como grupos distintos
+function clean(v){
+  if(v===null||v===undefined) return v;
+  return String(v).trim();
+}
+// Interpreta una celda tipo "casilla de verificación" en distintos formatos
+function isChecked(v){
+  if(v===true) return true;
+  if(v===false||v===null||v===undefined) return false;
+  if(typeof v==='number') return v===1;
+  const s = String(v).trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+  return ['true','verdadero','si','x','1','yes'].includes(s);
+}
+function sheetToRows(ws){
+  const rows = XLSX.utils.sheet_to_json(ws,{header:1,defval:null});
+  if(!rows.length) return [];
+  const headerMap = {};
+  rows[0].forEach((h,i)=>{ const key=normHeader(h); if(key && headerMap[key]===undefined) headerMap[key]=i; });
+  const out = [];
+  for(let r=1;r<rows.length;r++){
+    const row = rows[r];
+    if(row.every(v=>v===null||v==='')) continue;
+    out.push({row, headerMap});
+  }
+  return out;
+}
+// Cuando Excel tiene celdas combinadas (una misma "Tipo" o "Categoria" abarcando
+// varias filas), solo la primera fila del grupo trae el valor y el resto llega
+// vacío. Esto "rellena hacia abajo" esas columnas con el último valor visto.
+function fillDownColumns(entries, colNames){
+  if(!entries.length) return entries;
+  const headerMap = entries[0].headerMap;
+  const idxs = colNames.map(c=>findCol(headerMap,[c])).filter(i=>i!==null);
+  const last = {};
+  entries.forEach(({row})=>{
+    idxs.forEach(i=>{
+      const v = row[i];
+      if(v===null || v===undefined || String(v).trim()===''){
+        if(last[i]!==undefined) row[i]=last[i];
+      } else {
+        last[i]=v;
+      }
+    });
+  });
+  return entries;
+}
+function parseWorkbook(wb){
+  const sheetNames = wb.SheetNames;
+  const findSheet = (needle)=> sheetNames.find(n=>normHeader(n)===normHeader(needle)) ||
+                                sheetNames.find(n=>normHeader(n).includes(normHeader(needle)));
+  const result = {mensual:[],proyectos:[],ahorro:[],objetivo:[],sourceLabel:'archivo cargado'};
+
+  const mName = findSheet('Mensual');
+  if(mName){
+    result.mensual = sheetToRows(wb.Sheets[mName]).map(({row,headerMap})=>{
+      const get=(c)=>{const i=findCol(headerMap,c); return i===null?null:row[i];};
+      return {
+        mes: get(['Mes','Month']),
+        visitas: Number(get(['Visitas'])||0),
+        horas: Number(get(['Horas'])||0),
+        espec_suerox: Number(get(['Espec_Suerox','EspecSuerox'])||0),
+        espec_mm: Number(get(['Espec_MM','EspecMM'])||0),
+        espec_pc: Number(get(['Espec_PC','EspecPC'])||0),
+        espec_otc: Number(get(['Espec_OTC','EspecOTC'])||0),
+        web_suerox: Number(get(['Web_Suerox','WebSuerox'])||0),
+        web_mm: Number(get(['Web_MM','WebMM'])||0),
+        web_pc: Number(get(['Web_PC','WebPC'])||0),
+        web_otc: Number(get(['Web_OTC','WebOTC'])||0),
+        web_pack: Number(get(['Web_PACK','WebPACK'])||0)
+      };
+    }).filter(r=>r.mes);
+  }
+
+  const pName = findSheet('Proyectos');
+  if(pName){
+    const pRows = fillDownColumns(sheetToRows(wb.Sheets[pName]), ['Proyecto','Categoria','Categoría','Tipo']);
+    result.proyectos = pRows.map(({row,headerMap})=>{
+      const get=(c)=>{const i=findCol(headerMap,c); return i===null?null:row[i];};
+      return {
+        proyecto: clean(get(['Proyecto'])),
+        categoria: clean(get(['Categoria','Categoría']))||'Sin categoría',
+        tipo: clean(get(['Tipo']))||'Sin tipo',
+        avance: Number(get(['Avance'])||0),
+        claves: (get(['Claves']) ?? 'TBD'),
+        comentario: get(['Comentario'])||'',
+        enPuntoVenta: isChecked(get(['¿Producto ya en Punto de venta?','Producto ya en Punto de venta','En Punto de Venta','Punto de Venta']))
+      };
+    }).filter(r=>r.proyecto);
+  }
+
+  const aName = findSheet('Ahorro');
+  if(aName){
+    result.ahorro = sheetToRows(wb.Sheets[aName]).map(({row,headerMap})=>{
+      const get=(c)=>{const i=findCol(headerMap,c); return i===null?null:row[i];};
+      let monto = get(['Ahorro Estimado','AhorroEstimado','Monto','Ahorro','Importe']);
+      if(monto===null){
+        for(let i=row.length-1;i>=0;i--){ if(typeof row[i]==='number'){ monto = row[i]; break; } }
+      }
+      return { proyecto: clean(get(['Proyecto'])), monto: Number(monto||0), comentario: clean(get(['Comentarios','Comentario']))||'' };
+    }).filter(r=>r.proyecto);
+  }
+
+  const oName = findSheet('Avance Proyectos objetivo');
+  if(oName){
+    const oRows = fillDownColumns(sheetToRows(wb.Sheets[oName]), ['Proyecto','Categoria','Categoría']);
+    result.objetivo = oRows.map(({row,headerMap})=>{
+      const get=(c)=>{const i=findCol(headerMap,c); return i===null?null:row[i];};
+      return {
+        proyecto: clean(get(['Proyecto'])),
+        categoria: clean(get(['Categoria','Categoría']))||'Sin categoría',
+        avance: Number(get(['Avance'])||0)
+      };
+    }).filter(r=>r.proyecto);
+  }
+  return result;
+}
+
+/* ============ HELPERS ============ */
+function colorMapFor(values){
+  const uniq = [...new Set(values)];
+  const map = {};
+  uniq.forEach((v,i)=> map[v] = PALETTE[i % PALETTE.length]);
+  return map;
+}
+function statusColor(pct){
+  if(pct<=0) return '#ef4444';
+  if(pct>=100) return '#22c55e';
+  return '#f5b942';
+}
+// Sombreado de fondo de las tarjetas de proyecto según el tipo
+function tipoBgColor(tipo){
+  const key = normHeader(tipo); // ignora espacios/puntos/acentos/mayúsculas
+  if(key.includes('objetivo')) return '#EAF3FC'; // azul claro
+  if(key.includes('ahorro')) return '#D3E8FB';   // azul un poco más intenso
+  return '#ffffff';
+}
+// Orden de bloques para "Avance por proyecto": P.Objetivo, Ahorro, Regular, Célula, luego cualquier otro tipo
+const TIPO_BLOCK_ORDER = [
+  {key:'objetivo', match:'objetivo', label:'P.Objetivo', sw:'#0ea5a0'},
+  {key:'ahorro', match:'ahorro', label:'Ahorro', sw:'#5b5fef'},
+  {key:'regular', match:'regular', label:'Regular', sw:'#ff6b4a'},
+  {key:'celula', match:'celula', label:'Célula', sw:'#f5b942'}
+];
+function tipoGroupKey(tipo){
+  const key = normHeader(tipo);
+  const found = TIPO_BLOCK_ORDER.find(g=>key.includes(g.match));
+  return found ? found.key : 'otros';
+}
+function destroyCharts(){ charts.forEach(c=>c.destroy()); charts = []; }
+function gradient(ctx, color){
+  const g = ctx.createLinearGradient(0,0,0,140);
+  g.addColorStop(0, color+'55');
+  g.addColorStop(1, color+'02');
+  return g;
+}
+
+/* ============ RENDER ============ */
+function renderAll(){
+  const data = STATE.data;
+  const proj = data.proyectos;
+  const meses = data.mensual.map(m=>m.mes);
+  document.getElementById('medalLegendIcon').src = MEDAL_ICON;
+
+  const totalProj = proj.length;
+  const avgAvance = totalProj ? Math.round(proj.reduce((s,p)=>s+p.avance,0)/totalProj) : 0;
+  const visitasTot = data.mensual.reduce((s,m)=>s+m.visitas,0);
+  const horasTot = data.mensual.reduce((s,m)=>s+m.horas,0);
+  const especTot = data.mensual.reduce((s,m)=>s+m.espec_suerox+m.espec_mm+m.espec_pc+(m.espec_otc||0),0);
+  const webTot = data.mensual.reduce((s,m)=>s+m.web_suerox+m.web_mm+(m.web_pc||0)+(m.web_otc||0)+(m.web_pack||0),0);
+  const clavesNum = proj.reduce((s,p)=> s + (isNaN(Number(p.claves)) ? 0 : Number(p.claves)), 0);
+  const clavesTBD = proj.filter(p=> isNaN(Number(p.claves))).length;
+  const ahorroTot = data.ahorro.reduce((s,a)=>s+a.monto,0);
+  const objetivo = data.objetivo || [];
+  const avgObjetivo = objetivo.length ? Math.round(objetivo.reduce((s,p)=>s+p.avance,0)/objetivo.length) : 0;
+
+  const catColors = colorMapFor(proj.map(p=>p.categoria));
+  const tipoColors = colorMapFor(proj.map(p=>p.tipo));
+  const tipoCounts = {};
+  proj.forEach(p=>{ tipoCounts[p.tipo] = (tipoCounts[p.tipo]||0)+1; });
+  const catCounts = {};
+  proj.forEach(p=>{ catCounts[p.categoria] = (catCounts[p.categoria]||0)+1; });
+
+  document.getElementById('periodTag').textContent = meses.length ? `${meses[0].toUpperCase()} — ${meses[meses.length-1].toUpperCase()}` : 'SIN PERIODO';
+  document.getElementById('sourceTag').textContent = `Fuente: ${data.sourceLabel}`;
+  document.getElementById('updatedTag').textContent = `Actualizado ${new Date().toLocaleString('es-MX')}`;
+  document.getElementById('projCount').textContent = `${totalProj} proyectos · ordenados de mayor a menor avance`;
+
+  /* --- BENTO --- */
+  document.getElementById('bentoRow').innerHTML = `
+    <div class="card hero">
+      <svg width="104" height="104" viewBox="0 0 104 104">
+        <circle cx="52" cy="52" r="45" fill="none" stroke="#e2e8ec" stroke-width="12"/>
+        <circle id="heroRing" cx="52" cy="52" r="45" fill="none" stroke="#0ea5a0" stroke-width="12"
+          stroke-linecap="round" transform="rotate(-90 52 52)"/>
+      </svg>
+      <div class="htext">
+        <div class="label">Avance promedio</div>
+        <div class="big">${avgAvance}%</div>
+        <div class="note">Sobre ${totalProj} proyecto${totalProj===1?'':'s'} activo${totalProj===1?'':'s'} del portafolio.</div>
+      </div>
+    </div>
+    <div class="card mini-kpi">
+      <div class="icon" style="background:var(--indigo-l); color:var(--indigo); font-size:18px;">📋</div>
+      <div>
+        <div class="label">Proyectos</div>
+        <div class="val">${totalProj}</div>
+        <div class="foot">${Object.entries(tipoCounts).map(([k,v])=>`${k} ${v}`).join(' · ')}</div>
+      </div>
+    </div>
+    <div class="card hero">
+      <svg width="104" height="104" viewBox="0 0 104 104">
+        <circle cx="52" cy="52" r="45" fill="none" stroke="#e2e8ec" stroke-width="12"/>
+        <circle id="heroRingObjetivo" cx="52" cy="52" r="45" fill="none" stroke="#5b5fef" stroke-width="12"
+          stroke-linecap="round" transform="rotate(-90 52 52)"/>
+      </svg>
+      <div class="htext">
+        <div class="label">Avance Proyectos Objetivo</div>
+        <div class="big">${avgObjetivo}%</div>
+        <div class="note">Sobre ${objetivo.length} proyecto${objetivo.length===1?'':'s'} objetivo${objetivo.length===1?'':'s'} priorizados.</div>
+      </div>
+    </div>
+    <div class="card mini-kpi">
+      <div class="icon" style="background:var(--coral-l); color:var(--coral); font-size:18px;">🔑</div>
+      <div>
+        <div class="label">Claves pipeline</div>
+        <div class="val">${clavesNum}</div>
+        <div class="foot">${clavesTBD} proyecto${clavesTBD===1?'':'s'} con conteo TBD</div>
+      </div>
+    </div>
+    <div class="card mini-kpi">
+      <div class="icon" style="background:var(--teal-l); color:var(--teal); font-size:18px;">🚚</div>
+      <div>
+        <div class="label">Visitas a planta</div>
+        <div class="val">${visitasTot}<small>/ ${horasTot} h</small></div>
+        <div class="foot">~${visitasTot? (horasTot/visitasTot).toFixed(1):'0'} h por visita</div>
+      </div>
+    </div>
+  `;
+
+  /* --- TREND ROW --- */
+  document.getElementById('trendRow').innerHTML = `
+    <div class="card trend-card">
+      <div class="thead">
+        <div><div class="ttitle">Visitas a planta</div><div class="tsub">visitas y horas por mes</div></div>
+        <div class="ttotal">${visitasTot}<small>total periodo</small></div>
+      </div>
+      <canvas id="chartVisitas"></canvas>
+      <div class="legend" style="margin-top:8px; font-size:11px;">
+        <div class="chip"><span class="sw" style="background:#5b5fef"></span>Visitas</div>
+        <div class="chip"><span class="sw" style="background:#ff6b4a"></span>Horas</div>
+      </div>
+    </div>
+    <div class="card trend-card">
+      <div class="thead">
+        <div><div class="ttitle">Especificaciones</div><div class="tsub">claves por mes</div></div>
+        <div class="ttotal">${especTot}<small>total periodo</small></div>
+      </div>
+      <canvas id="chartEspec"></canvas>
+      <div class="legend" style="margin-top:8px; font-size:11px;">
+        <div class="chip"><span class="sw" style="background:#0ea5a0"></span>Bebidas</div>
+        <div class="chip"><span class="sw" style="background:#ff6b4a"></span>MM</div>
+        <div class="chip"><span class="sw" style="background:#5b5fef"></span>PC</div>
+        <div class="chip"><span class="sw" style="background:#f5b942"></span>OTC</div>
+      </div>
+    </div>
+    <div class="card trend-card">
+      <div class="thead">
+        <div><div class="ttitle">WebCenter</div><div class="tsub">artes aprobadas</div></div>
+        <div class="ttotal">${webTot}<small>total periodo</small></div>
+      </div>
+      <canvas id="chartWeb"></canvas>
+      <div class="legend" style="margin-top:8px; font-size:11px;">
+        <div class="chip"><span class="sw" style="background:#0ea5a0"></span>Bebidas</div>
+        <div class="chip"><span class="sw" style="background:#ff6b4a"></span>MM</div>
+        <div class="chip"><span class="sw" style="background:#5b5fef"></span>PC</div>
+        <div class="chip"><span class="sw" style="background:#f5b942"></span>OTC</div>
+        <div class="chip"><span class="sw" style="background:#06b6d4"></span>PACK</div>
+      </div>
+    </div>
+    <div class="card trend-card tipo-card">
+      <div class="thead">
+        <div><div class="ttitle">Tipo de proyecto</div><div class="tsub">${totalProj} proyectos</div></div>
+      </div>
+      <div class="tipo-card-body" style="display:flex; align-items:center; gap:16px; margin-top:6px;">
+        <canvas id="chartTipo" style="max-height:96px;max-width:96px;"></canvas>
+        <div class="tipo-stats" style="display:flex;flex-direction:column;gap:8px;flex:1;">
+          ${Object.entries(tipoCounts).map(([k,v])=>`
+            <div class="tipo-stat" style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;">
+              <span class="name" style="display:flex;align-items:center;gap:7px;font-weight:600;"><span class="sw" style="width:9px;height:9px;border-radius:3px;background:${tipoColors[k].base}"></span>${k}</span>
+              <span class="n" style="font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:14.5px;">${v}</span>
+            </div>`).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  /* --- PROJECT CARDS (agrupadas por tipo) --- */
+  const grid = document.getElementById('projGrid');
+  if(!proj.length){
+    grid.innerHTML = `<div class="empty-msg">No hay proyectos en este archivo.</div>`;
+  } else {
+    const r2 = 26, c2 = 2*Math.PI*r2;
+    const cardHTML = (p)=>{
+      const sc = statusColor(p.avance);
+      const cc = catColors[p.categoria].base;
+      const cl = catColors[p.categoria].light;
+      const bg = tipoBgColor(p.tipo);
+      const pct = Math.max(0, Math.min(100, p.avance));
+      const offset = c2 - (pct/100)*c2;
+      return `
+        <div class="proj-card" style="--status-color:${sc}; background:${bg};">
+          ${p.enPuntoVenta ? `<img class="medal" src="${MEDAL_ICON}" alt="Producto ya en punto de venta" title="Producto ya en punto de venta">` : ''}
+          <div class="gauge">
+            <svg width="64" height="64" viewBox="0 0 64 64">
+              <circle cx="32" cy="32" r="${r2}" fill="none" stroke="#eef2f4" stroke-width="7"/>
+              <circle cx="32" cy="32" r="${r2}" fill="none" stroke="${sc}" stroke-width="7"
+                stroke-linecap="round" stroke-dasharray="${c2}" stroke-dashoffset="${offset}"/>
+            </svg>
+            <div class="gval">${p.avance}%</div>
+          </div>
+          <div class="info">
+            <div class="pname">${p.proyecto}</div>
+            <div class="tags">
+              <span class="cat-pill" style="background:${cl};color:${cc}">${p.categoria}</span>
+              <span class="tipo-pill">${p.tipo}</span>
+            </div>
+            <div class="comment">${p.comentario || '—'}</div>
+          </div>
+        </div>
+      `;
+    };
+
+    // Agrupa por tipo: P.Objetivo, Ahorro, Regular, Célula, y cualquier otro tipo al final
+    const buckets = {};
+    proj.forEach(p=>{
+      const gk = tipoGroupKey(p.tipo);
+      (buckets[gk] = buckets[gk] || []).push(p);
+    });
+    const extraKeys = Object.keys(buckets).filter(k=>!TIPO_BLOCK_ORDER.some(g=>g.key===k)).sort();
+    const orderedBlocks = [...TIPO_BLOCK_ORDER, ...extraKeys.map(k=>({key:k, label:buckets[k][0].tipo, sw:'#94a3b8'}))];
+
+    grid.innerHTML = orderedBlocks.filter(b=>buckets[b.key] && buckets[b.key].length).map(b=>{
+      const items = [...buckets[b.key]].sort((a,c)=>c.avance-a.avance);
+      return `
+        <div class="tipo-block">
+          <div class="tipo-block-head">
+            <span class="sw" style="background:${b.sw}"></span>
+            <h3>${b.label}</h3>
+            <span class="count">${items.length} proyecto${items.length===1?'':'s'}</span>
+          </div>
+          <div class="proj-grid">${items.map(cardHTML).join('')}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  /* --- AHORRO STAT (above Avance por proyecto) --- */
+  const ahorroConComentario = data.ahorro.filter(a=>a.comentario);
+  document.getElementById('ahorroRow').innerHTML = `
+    <div class="card">
+      <div class="stat-card" style="margin-bottom:${ahorroConComentario.length?'16px':'0'};">
+        <div class="num" style="color:var(--teal)">$${ahorroTot.toLocaleString('es-MX')}</div>
+        <div class="txt">Ahorro estimado (MXN) generado por ${data.ahorro.length} proyecto${data.ahorro.length===1?'':'s'} de tipo Ahorro en el portafolio.</div>
+      </div>
+      ${ahorroConComentario.length ? `
+        <div style="border-top:1px solid var(--line); padding-top:14px; display:flex; flex-direction:column; gap:12px;">
+          ${ahorroConComentario.map(a=>`
+            <div style="display:flex; justify-content:space-between; gap:16px; align-items:baseline;">
+              <div style="min-width:0;">
+                <div style="font-weight:700; font-size:13px;">${a.proyecto}</div>
+                <div style="font-size:12px; color:var(--muted); margin-top:2px; line-height:1.45;">${a.comentario}</div>
+              </div>
+              <div style="font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:14px; color:var(--teal); white-space:nowrap;">$${a.monto.toLocaleString('es-MX')}</div>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+    </div>
+  `;
+
+  /* --- BOTTOM ROW --- */
+  document.getElementById('bottomRow').innerHTML = `
+    <div class="card stat-card">
+      <div class="num" style="color:var(--indigo)">${clavesNum}</div>
+      <div class="txt">Claves (SKUs) contempladas en el portafolio de proyectos activos.${clavesTBD? ` No incluye ${clavesTBD} proyecto${clavesTBD===1?'':'s'} cuyo conteo aún está por definir.`:''}</div>
+    </div>
+  `;
+
+  /* ============ CHARTS ============ */
+  destroyCharts();
+
+  const heroRing = document.getElementById('heroRing');
+  const heroRingObjetivo = document.getElementById('heroRingObjetivo');
+  const R = 45, C = 2*Math.PI*R;
+  [heroRing, heroRingObjetivo].forEach(ring=>{
+    ring.style.strokeDasharray = C;
+    ring.style.strokeDashoffset = C;
+  });
+  requestAnimationFrame(()=>{
+    heroRing.style.transition = 'stroke-dashoffset 1.1s cubic-bezier(.3,.8,.3,1)';
+    heroRing.style.strokeDashoffset = C - (avgAvance/100)*C;
+    heroRingObjetivo.style.transition = 'stroke-dashoffset 1.1s cubic-bezier(.3,.8,.3,1)';
+    heroRingObjetivo.style.strokeDashoffset = C - (avgObjetivo/100)*C;
+  });
+
+  // Dibuja el valor de cada segmento directamente sobre la barra apilada
+  const stackedValuePlugin = {
+    id: 'stackedValueLabels',
+    afterDatasetsDraw(chart){
+      const {ctx} = chart;
+      chart.data.datasets.forEach((dataset, di)=>{
+        const meta = chart.getDatasetMeta(di);
+        if(meta.hidden) return;
+        meta.data.forEach((bar, i)=>{
+          const value = dataset.data[i];
+          if(!value) return; // no dibuja ceros/vacíos para no saturar
+          const top = Math.min(bar.y, bar.base);
+          const bottom = Math.max(bar.y, bar.base);
+          const segH = bottom - top;
+          ctx.save();
+          ctx.font = "700 10.5px Inter, sans-serif";
+          ctx.textAlign = 'center';
+          if(segH >= 14){
+            ctx.fillStyle = '#ffffff';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(value, bar.x, (top+bottom)/2);
+          } else {
+            ctx.fillStyle = '#132630';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(value, bar.x, top-3);
+          }
+          ctx.restore();
+        });
+      });
+    }
+  };
+
+  charts.push(new Chart(document.getElementById('chartVisitas'), {
+    data:{labels:meses, datasets:[
+      {type:'bar', label:'Visitas', data:data.mensual.map(m=>m.visitas), backgroundColor:'#5b5fef', borderRadius:5, maxBarThickness:30, yAxisID:'y', order:2},
+      {type:'line', label:'Horas', data:data.mensual.map(m=>m.horas), borderColor:'#ff6b4a', backgroundColor:'#ff6b4a', fill:false, tension:0.4, pointRadius:4, pointBackgroundColor:'#ff6b4a', borderWidth:2.5, yAxisID:'y1', order:1}
+    ]},
+    options:{
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:(c)=> c.dataset.label==='Horas' ? c.parsed.y+' h' : c.parsed.y+' visitas'}} },
+      scales:{
+        y:{beginAtZero:true, grid:{color:'#eef2f4'}},
+        y1:{beginAtZero:true, position:'right', grid:{display:false}, ticks:{color:'#ff6b4a'}},
+        x:{grid:{display:false}}
+      }
+    }
+  }));
+
+  charts.push(new Chart(document.getElementById('chartEspec'), {
+    type:'bar',
+    data:{labels:meses, datasets:[
+      {label:'Suerox', data:data.mensual.map(m=>m.espec_suerox), backgroundColor:'#0ea5a0', borderRadius:4},
+      {label:'MM', data:data.mensual.map(m=>m.espec_mm), backgroundColor:'#ff6b4a', borderRadius:4},
+      {label:'PC', data:data.mensual.map(m=>m.espec_pc), backgroundColor:'#5b5fef', borderRadius:4},
+      {label:'OTC', data:data.mensual.map(m=>m.espec_otc||0), backgroundColor:'#f5b942', borderRadius:4}
+    ]},
+    plugins:[stackedValuePlugin],
+    options:{
+      layout:{padding:{top:14}},
+      plugins:{legend:{display:false}},
+      scales:{y:{stacked:true, beginAtZero:true, grid:{color:'#eef2f4'}}, x:{stacked:true, grid:{display:false}}}
+    }
+  }));
+
+  charts.push(new Chart(document.getElementById('chartWeb'), {
+    type:'bar',
+    data:{labels:meses, datasets:[
+      {label:'Suerox', data:data.mensual.map(m=>m.web_suerox), backgroundColor:'#0ea5a0', borderRadius:4},
+      {label:'MM', data:data.mensual.map(m=>m.web_mm), backgroundColor:'#ff6b4a', borderRadius:4},
+      {label:'PC', data:data.mensual.map(m=>m.web_pc||0), backgroundColor:'#5b5fef', borderRadius:4},
+      {label:'OTC', data:data.mensual.map(m=>m.web_otc||0), backgroundColor:'#f5b942', borderRadius:4},
+      {label:'PACK', data:data.mensual.map(m=>m.web_pack||0), backgroundColor:'#06b6d4', borderRadius:4}
+    ]},
+    plugins:[stackedValuePlugin],
+    options:{
+      layout:{padding:{top:14}},
+      plugins:{legend:{display:false}},
+      scales:{y:{stacked:true, beginAtZero:true, grid:{color:'#eef2f4'}}, x:{stacked:true, grid:{display:false}}}
+    }
+  }));
+
+  const tipoLabels = Object.keys(tipoCounts);
+  charts.push(new Chart(document.getElementById('chartTipo'), {
+    type:'doughnut',
+    data:{labels:tipoLabels, datasets:[{
+      data:tipoLabels.map(k=>tipoCounts[k]), backgroundColor:tipoLabels.map(k=>tipoColors[k].base), borderColor:'#fff', borderWidth:4
+    }]},
+    options:{cutout:'70%', plugins:{legend:{display:false}}}
+  }));
+}
+
+/* ============ FILE UPLOAD ============ */
+document.getElementById('fileInput').addEventListener('change', function(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const statusBar = document.getElementById('statusBar');
+  const reader = new FileReader();
+  reader.onload = function(evt){
+    try{
+      const wb = XLSX.read(evt.target.result, {type:'array'});
+      const parsed = parseWorkbook(wb);
+      parsed.sourceLabel = file.name;
+      if(!parsed.mensual.length && !parsed.proyectos.length){
+        throw new Error('No se encontraron hojas "Mensual" o "Proyectos" reconocibles.');
+      }
+      STATE.data = parsed;
+      renderAll();
+      statusBar.className = 'no-pdf ok';
+      statusBar.textContent = `✓ Dashboard actualizado con "${file.name}" — ${parsed.proyectos.length} proyectos, ${parsed.mensual.length} meses.`;
+    }catch(err){
+      statusBar.className = 'no-pdf err';
+      statusBar.textContent = `✕ No se pudo procesar el archivo: ${err.message} Verifica que conserve las hojas "Mensual", "Proyectos" y "Ahorro" con encabezados similares.`;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+  e.target.value = '';
+});
+
+/* ============ PDF EXPORT (1 sola página) ============ */
+document.getElementById('pdfBtn').addEventListener('click', async function(){
+  const btn = this;
+  const original = btn.innerHTML;
+  const root = document.getElementById('pageRoot');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="dot">⏳</span><span>Generando PDF…</span>';
+  document.body.classList.add('capturing');
+
+  // Fuerza un ancho de escritorio fijo para la captura, sin importar qué tan
+  // angosta esté la ventana/artefacto en pantalla en ese momento — así el
+  // layout de varias columnas nunca colapsa al modo angosto/celular.
+  const PDF_CAPTURE_WIDTH = 2560;
+  const prevWidth = root.style.width;
+  const prevMaxWidth = root.style.maxWidth;
+  root.style.width = PDF_CAPTURE_WIDTH + 'px';
+  root.style.maxWidth = PDF_CAPTURE_WIDTH + 'px';
+  // fuerza reflow antes de medir/capturar
+  void root.offsetWidth;
+
+  try{
+    const canvas = await html2canvas(root, {
+      scale: 2,
+      backgroundColor: '#eef2f4',
+      useCORS: true,
+      windowWidth: PDF_CAPTURE_WIDTH,
+      width: PDF_CAPTURE_WIDTH,
+      windowHeight: root.scrollHeight,
+      height: root.scrollHeight
+    });
+    const imgData = canvas.toDataURL('image/png');
+
+    // Orientación automática según la forma del dashboard capturado
+    const orientation = canvas.width >= canvas.height ? 'landscape' : 'portrait';
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation, unit:'mm', format:'letter', compress:true });
+
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const margin = 5;
+    const maxW = pageW - margin*2;
+    const maxH = pageH - margin*2;
+
+    // Escala el dashboard completo para que quepa en una sola página, sin cortar nada
+    const ratio = canvas.width / canvas.height;
+    let w = maxW, h = w / ratio;
+    if(h > maxH){ h = maxH; w = h * ratio; }
+    const x = (pageW - w)/2;
+    const y = (pageH - h)/2;
+
+    pdf.addImage(imgData, 'PNG', x, y, w, h, undefined, 'FAST');
+    pdf.save('dashboard-empaque.pdf');
+  }catch(err){
+    alert('No se pudo generar el PDF: ' + err.message);
+  }finally{
+    root.style.width = prevWidth;
+    root.style.maxWidth = prevMaxWidth;
+    document.body.classList.remove('capturing');
+    btn.disabled = false;
+    btn.innerHTML = original;
+  }
+});
+
+renderAll();
+</script>
+</body>
+</html>
